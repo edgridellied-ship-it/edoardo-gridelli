@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidenze - Edoardo Gridelli</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0a0a0a;font-family:Inter,sans-serif;color:#fff;padding:20px;}
+.header{text-align:center;padding:40px 0 20px;}
+.header h1{font-size:32px;letter-spacing:3px;margin:0;font-weight:700;}
+.header .sub{margin-top:10px;font-size:14px;color:#aaa;letter-spacing:1px;}
+.wrap{max-width:1080px;margin:0 auto;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px;}
+@media(max-width:768px){.grid{grid-template-columns:1fr;}}
+.card{background:#1a1a1a;border:1px solid #E10600;padding:20px 18px;border-radius:2px;position:relative;min-height:280px;display:flex;flex-direction:column;cursor:pointer;transition:transform 0.2s, border-color 0.2s;text-decoration:none;color:#fff;}
+.card:hover{transform:translateY(-3px);border-color:#FFD700;}
+.card.n1{border:2px solid #E10600;background:#1f1f1f;}
+.card.n1:hover{border-color:#FFD700;}
+.date{font-size:11px;color:#888;letter-spacing:1px;}
+.badge-top{position:absolute;top:10px;right:10px;background:#E10600;color:#fff;padding:3px 8px;font-size:9px;font-weight:700;letter-spacing:1px;}
+.badge-ultimo{display:flex;gap:6px;margin-top:12px;}
+.badge-ultimo span{background:#FFD700;color:#000;padding:2px 6px;font-size:9px;font-weight:700;}
+.badge-ultimo span.red{background:#E10600;color:#fff;}
+.card h2{font-size:16px;line-height:1.35;margin:16px 0 10px 0;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:#fff;}
+.card .desc{font-size:12.5px;line-height:1.6;color:#ccc;margin-top:8px;font-style:italic;}
+.link-bottom{margin-top:auto;padding-top:16px;color:#FFD700;font-size:10px;letter-spacing:1.2px;font-weight:600;}
+.pos-label{position:absolute;top:10px;left:10px;background:#333;color:#aaa;padding:2px 6px;font-size:8px;}
+a.card-link{color:inherit;text-decoration:none;display:block;}
+.riga-centro{margin-top:22px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;}
+.card-lungo-chiaro{background:#F3EFE6;border:1px solid #A8C5D6;border-radius:8px;padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:8px;max-width:420px;width:88%;min-height:50px;position:relative;text-decoration:none;transition:transform 0.2s, border-color 0.2s;cursor:pointer;text-align:center;}
+.card-lungo-chiaro:hover{transform:translateY(-2px);border-color:#E10600;}
+.card-lungo-chiaro h2{font-size:12.5px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:#000;margin:0;line-height:1.3;text-align:center;}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>AGGIORNAMENTO LIVE</h1>
+<div class="sub">Ultimi articoli - Clicca sul riquadro per vedere il lavoro svolto</div>
+</div>
+<div class="wrap">
+<div class="grid">
+  <a href="https://www.nordestnews.it/2026/10/01/dal-1956-a-oggi-il-piemonte-cavalleria-festeggia-il-suo-legame-a-trieste-con-la-banda-dellesercito/" target="_blank" class="card-link">
+  <div class="card n1" id="evidenza-1">
+    <div class="pos-label">POS1 SX ALTO - ULTIMA - reale-n1</div>
+    <div class="date">01/10/2026</div>
+    <div class="badge-top">CONCERTO</div>
+    <div class="badge-ultimo"><span>ULTIMO</span><span class="red">ARRIVATO</span></div>
+    <h2>DAL 1956 A OGGI: IL PIEMONTE CAVALLERIA FESTEGGIA IL SUO LEGAME A TRIESTE CON LA BANDA DELL'ESERCITO - COL. SANDRO RICCI / PIEMONTE CAVALLERIA - ULTIMO ARRIVATO - CONCERTO</h2>
+    <div class="desc">Colonnello Sandro Ricci / Piemonte Cavalleria - Banda dell'Esercito - Rossetti</div>
+    <div class="link-bottom">→ CLICCA QUI - VAI ALL'ARTICOLO ORIGINALE</div>
+  </div>
+  </a>
+  <a href="https://www.nordestnews.it/2026/09/27/il-rossetti-apre-le-porte-alla-citta-con-un-grande-open-day-tra-nuovo-cartellone-memoria-e-novita/" target="_blank" class="card-link">
+  <div class="card" id="evidenza-2">
+    <div class="pos-label">POS2 ALTO A SX - reale-n2</div>
+    <div class="date">27/09/2026</div>
+    <div class="badge-top">TEATRO</div>
+    <h2>IL ROSSETTI APRE LE PORTE ALLA CITTA CON UN GRANDE OPEN DAY TRA NUOVO CARTELLONE MEMORIA E NOVITA - INTERVISTA AL PRESIDENTE FRANCESCO GRANBASSI</h2>
+    <div class="link-bottom">→ CLICCA QUI - VAI ALL'ARTICOLO ORIGINALE</div>
+  </div>
+  </a>
+  <a href="https://www.nordestnews.it/2026/09/23/il-rossetti-open-day-il-teatro-apre-le-sue-porte-sabato-26-settembre-alle-14-30/" target="_blank" class="card-link">
+  <div class="card" id="evidenza-3">
+    <div class="pos-label">POS3 SX BASSO - reale-n3</div>
+    <div class="date">23/09/2026</div>
+    <div class="badge-top">TEATRO</div>
+    <h2>IL ROSSETTI OPEN DAY IL TEATRO APRE LE SUE PORTE SABATO 26 SETTEMBRE ALLE 14 30</h2>
+    <div class="link-bottom">→ CLICCA QUI - VAI ALL'ARTICOLO ORIGINALE</div>
+  </div>
+  </a>
+  <a href="https://www.nordestnews.it/2026/07/08/dal-grande-teatro-ai-musical-internazionali-il-rossetti-rilancia-ancora-una-stagione-che-parla-a-tutti/" target="_blank" class="card-link">
+  <div class="card" id="evidenza-4">
+    <div class="pos-label">POS4 DX BASSO - reale-n4</div>
+    <div class="date">08/07/2026</div>
+    <div class="badge-top">TEATRO</div>
+    <h2>DAL GRANDE TEATRO AI MUSICAL INTERNAZIONALI IL ROSSETTI RILANCIA ANCORA UNA STAGIONE CHE PARLA A TUTTI</h2>
+    <div class="link-bottom">→ CLICCA QUI - VAI ALL'ARTICOLO ORIGINALE</div>
+  </div>
+  </a>
+</div>
+<div class="riga-centro">
+<a href="archivio.html" class="card-lungo-chiaro"><h2>ARTICOLO NON TROVATO? → ARCHIVIO</h2></a>
+<a href="data:text/html;base64,PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9Iml0Ij4KPGhlYWQ+CjxtZXRhIGNoYXJzZXQ9IlVURi04Ij4KPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xIj4KPHRpdGxlPkVkb2FyZG8gR3JpZGVsbGkgLSBHaW9ybmFsaXN0YTwvdGl0bGU+CjxzdHlsZT4KQGZvbnQtZmFjZXtmb250LWZhbWlseToiQ01VIFNlcmlmIjtzcmM6bG9jYWwoIkNNVSBTZXJpZiIpLGxvY2FsKCJMYXRpbiBNb2Rlcm4gUm9tYW4iKSxsb2NhbCgiQ29tcHV0ZXIgTW9kZXJuIil9Cip7Ym94LXNpemluZzpib3JkZXItYm94fQpib2R5e21hcmdpbjowO2JhY2tncm91bmQ6I0ZGRkVGQjtmb250LWZhbWlseToiQ01VIFNlcmlmIiwiTGF0aW4gTW9kZXJuIFJvbWFuIixHZW9yZ2lhLHNlcmlmO2NvbG9yOiMxRTFFMUU7ZGlzcGxheTpmbGV4O2ZsZXgtZGlyZWN0aW9uOmNvbHVtbjtqdXN0aWZ5LWNvbnRlbnQ6ZmxleC1zdGFydDthbGlnbi1pdGVtczpjZW50ZXI7bWluLWhlaWdodDoxMDBkdmh9Ci53cmFwe21heC13aWR0aDo3MDBweDttYXJnaW46MCBhdXRvO3BhZGRpbmc6NDZweCAyMHB4IDI0cHg7dGV4dC1hbGlnbjpjZW50ZXI7d2lkdGg6MTAwJX0KaDF7Zm9udC1mYW1pbHk6IkNNVSBTZXJpZiIsIkxhdGluIE1vZGVybiBSb21hbiIsR2VvcmdpYSxzZXJpZjtmb250LXNpemU6MjZweDtsaW5lLWhlaWdodDoxLjM1O2ZvbnQtd2VpZ2h0OjQwMDttYXJnaW46MDt0ZXh0LWFsaWduOmNlbnRlcjtsZXR0ZXItc3BhY2luZzotMC4wMWVtfQouc3Vie21hcmdpbi10b3A6MTZweDtmb250LWZhbWlseToiQ01VIFNlcmlmIiwiTGF0aW4gTW9kZXJuIFJvbWFuIixHZW9yZ2lhLHNlcmlmO2ZvbnQtc2l6ZToxNHB4O2xpbmUtaGVpZ2h0OjEuNTtjb2xvcjojMmMyYzJjO3RleHQtYWxpZ246Y2VudGVyfQouc3ViMnttYXJnaW4tdG9wOjZweDtmb250LWZhbWlseToiQ01VIFNlcmlmIiwiTGF0aW4gTW9kZXJuIFJvbWFuIixHZW9yZ2lhLHNlcmlmO2ZvbnQtc2l6ZToxMXB4O2xpbmUtaGVpZ2h0OjEuNTtmb250LXN0eWxlOml0YWxpYztjb2xvcjojNkI3MjgwO3RleHQtYWxpZ246Y2VudGVyfQouYm94e21hcmdpbjoyNHB4IGF1dG8gMDtiYWNrZ3JvdW5kOiNGM0VGRTY7Ym9yZGVyOjFweCBzb2xpZCAjQThDNUQ2O3BhZGRpbmc6OHB4IDE0cHggMTBweDtib3JkZXItcmFkaXVzOjJweDttYXgtd2lkdGg6MjQwcHg7ZGlzcGxheTpmbGV4O2ZsZXgtZGlyZWN0aW9uOmNvbHVtbjthbGlnbi1pdGVtczpjZW50ZXJ9Ci5ib3ggLmxibHtmb250LWZhbWlseTpJbnRlcixBcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZTo4LjVweDtsZXR0ZXItc3BhY2luZzoxLjVweDt0ZXh0LXRyYW5zZm9ybTp1cHBlcmNhc2U7Y29sb3I6IzZCNzI4MDtkaXNwbGF5OmJsb2NrO21hcmdpbi1ib3R0b206NnB4fQouY29udGFjdC1idG57ZGlzcGxheTppbmxpbmUtZmxleDthbGlnbi1pdGVtczpjZW50ZXI7anVzdGlmeS1jb250ZW50OmNlbnRlcjtnYXA6NXB4O21pbi13aWR0aDoxMjBweDt3aWR0aDoxMjBweDtoZWlnaHQ6MzBweDtiYWNrZ3JvdW5kOiNFREU4RTA7Ym9yZGVyOjFweCBzb2xpZCAjRTEwNjAwO2JvcmRlci1yYWRpdXM6MTJweDtmb250LWZhbWlseTpJbnRlcixBcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxMXB4O2ZvbnQtd2VpZ2h0OjUwMDtjb2xvcjojMUUyQTMyO3RleHQtZGVjb3JhdGlvbjpub25lO2N1cnNvcjpwb2ludGVyO3RyYW5zaXRpb246YmFja2dyb3VuZCAwLjJzfQouY29udGFjdC1idG46aG92ZXJ7YmFja2dyb3VuZDojRThEQ0M4fQouc29jaWFsLXdyYXB7bWFyZ2luLXRvcDozNnB4O2Rpc3BsYXk6ZmxleDtqdXN0aWZ5LWNvbnRlbnQ6Y2VudGVyO2dhcDoxNHB4O2ZsZXgtd3JhcDp3cmFwO3Jvdy1nYXA6MTRweH0KLnNvY2lhbC1pdGVte21pbi13aWR0aDoxNDBweDttYXgtd2lkdGg6MTYwcHg7cGFkZGluZzoxNHB4IDEwcHg7Ym9yZGVyLXJhZGl1czo0cHg7ZGlzcGxheTpmbGV4O2ZsZXgtZGlyZWN0aW9uOmNvbHVtbjthbGlnbi1pdGVtczpjZW50ZXI7anVzdGlmeS1jb250ZW50OmNlbnRlcjt0ZXh0LWFsaWduOmNlbnRlcjtmb250LWZhbWlseTpJbnRlcixBcmlhbCxzYW5zLXNlcmlmfQouc29jaWFsLWl0ZW0ubXVjay1iZ3tiYWNrZ3JvdW5kOiNEMUM3Qjg7Ym9yZGVyOjFweCBzb2xpZCAjQThBMjlBfQouc29jaWFsLWl0ZW0ubXVjay1iZyAubGFiZWwtdG9we2ZvbnQtc2l6ZTo5cHg7bGV0dGVyLXNwYWNpbmc6MS4ycHg7dGV4dC10cmFuc2Zvcm06dXBwZXJjYXNlO2NvbG9yOiM2QjcyODA7ZGlzcGxheTpibG9jaztiYWNrZ3JvdW5kOiNFOERDQzg7cGFkZGluZzoycHggNnB4O2JvcmRlci1yYWRpdXM6MnB4fQouc29jaWFsLWl0ZW0ubXVjay1iZyAubmFtZS1ib3R0b217bWFyZ2luLXRvcDo4cHg7Zm9udC1zaXplOjExLjVweDtmb250LXdlaWdodDo1MDA7Y29sb3I6IzRBNEE0QTtkaXNwbGF5OmJsb2NrfQouc29jaWFsLWl0ZW0uaW5zdGFncmFte2JhY2tncm91bmQ6I0YzRUZFNjtib3JkZXI6MXB4IHNvbGlkICNFMTA2MDB9Ci5zb2NpYWwtaXRlbS5pbnN0YWdyYW0gYXtmb250LXNpemU6MTJweDtmb250LXdlaWdodDo2MDA7Y29sb3I6IzFFMkEzMjt0ZXh0LWRlY29yYXRpb246bm9uZTtkaXNwbGF5OmJsb2NrfQouc29jaWFsLWl0ZW0uaW5zdGFncmFtIHNtYWxse21hcmdpbi10b3A6NnB4O2ZvbnQtc2l6ZTo5LjVweDtjb2xvcjojMUUyQTMyO2ZvbnQtd2VpZ2h0OjUwMDtkaXNwbGF5OmJsb2NrO2JhY2tncm91bmQ6I0U4RENDODtwYWRkaW5nOjJweCA2cHg7Ym9yZGVyLXJhZGl1czoycHh9Ci5taW5pe21hcmdpbi10b3A6MzJweDtkaXNwbGF5OmZsZXg7anVzdGlmeS1jb250ZW50OmNlbnRlcjtnYXA6MTJweDtyb3ctZ2FwOjEycHg7ZmxleC13cmFwOm5vd3JhcH0KLm1pbmkgYXtkaXNwbGF5OmZsZXg7YWxpZ24taXRlbXM6Y2VudGVyO2p1c3RpZnktY29udGVudDpjZW50ZXI7YmFja2dyb3VuZDojRjNFRkU2O2JvcmRlcjoxcHggc29saWQgI0UxMDYwMDtjb2xvcjojMUUyQTMyO3BhZGRpbmc6MTBweCAxMnB4O2JvcmRlci1yYWRpdXM6MnB4O2ZvbnQtZmFtaWx5OkludGVyLEFyaWFsLHNhbnMtc2VyaWY7Zm9udC1zaXplOjExcHg7dGV4dC1kZWNvcmF0aW9uOm5vbmU7bWluLXdpZHRoOjEwNXB4O21heC13aWR0aDoxMzBweDttaW4taGVpZ2h0OjQ0cHg7dGV4dC1hbGlnbjpjZW50ZXI7ZmxleDoxIDEgMH0KLm1pbmkgYTpob3ZlcntiYWNrZ3JvdW5kOiNFOERDQzh9CkBtZWRpYShtYXgtd2lkdGg6NjUwcHgpey5taW5pe2ZsZXgtd3JhcDp3cmFwfS5taW5pIGF7bWluLXdpZHRoOjExMHB4O21heC13aWR0aDoxNTBweDtmbGV4OjAgMSBhdXRvfX0KPC9zdHlsZT4KPC9oZWFkPgo8Ym9keT4KPGRpdiBjbGFzcz0id3JhcCI+CjxoMT5FZG9hcmRvIEdyaWRlbGxpPGJyPkdpb3JuYWxpc3RhIHB1YmJsaWNpc3RhLCBiaW9sb2dvPGJyPmUgcGVyaXRvIGluZm9ybWF0aWNvPC9oMT4KPGRpdiBjbGFzcz0ic3ViIj5DdWx0dXJhLCB0ZWF0cm8gZSBzY2llbnphIHBlciBOb3JkZXN0TmV3cy5pdDwvZGl2Pgo8ZGl2IGNsYXNzPSJzdWIyIj5BdHRlc3RhdG8gR2lvcm5hbGlzbW8gQUkg4oCTIFVuaXZlcnNpdMOgIEZlZGVyaWNvIElJIGRpIE5hcG9saTwvZGl2Pgo8ZGl2IGNsYXNzPSJib3giPjxzcGFuIGNsYXNzPSJsYmwiPmNvbnRhdHRvIGRpcmV0dG88L3NwYW4+PGEgaWQ9ImNvbnRhY3RNYWlsIiBjbGFzcz0iY29udGFjdC1idG4iIGhyZWY9IiMiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vb3BlbmVyIj7ihpIg4pyJ77iPIGNvbnRhdHRvPC9hPjwvZGl2Pgo8ZGl2IGNsYXNzPSJzb2NpYWwtd3JhcCI+CjxkaXYgY2xhc3M9InNvY2lhbC1pdGVtIG11Y2stYmciPjxzcGFuIGNsYXNzPSJsYWJlbC10b3AiPmluIGFnZ2lvcm5hbWVudG88L3NwYW4+PHNwYW4gY2xhc3M9Im5hbWUtYm90dG9tIj5GYWNlYm9vazwvc3Bhbj48L2Rpdj4KPGRpdiBjbGFzcz0ic29jaWFsLWl0ZW0gaW5zdGFncmFtIj48YSBocmVmPSJodHRwczovL3d3dy5pbnN0YWdyYW0uY29tL2Vkb2FyZG8uZ3JpZGVsbGkyMDI2LyIgdGFyZ2V0PSJfYmxhbmsiPkluc3RhZ3JhbTwvYT48c21hbGw+QGVkb2FyZG8uZ3JpZGVsbGkyMDI2PC9zbWFsbD48L2Rpdj4KPGRpdiBjbGFzcz0ic29jaWFsLWl0ZW0gbXVjay1iZyI+PHNwYW4gY2xhc3M9ImxhYmVsLXRvcCI+aW4gYWdnaW9ybmFtZW50bzwvc3Bhbj48c3BhbiBjbGFzcz0ibmFtZS1ib3R0b20iPkxpbmtlZEluPC9zcGFuPjwvZGl2Pgo8L2Rpdj4KPGRpdiBjbGFzcz0ibWluaSI+CjxhIGhyZWY9Ii4vZXZpZGVuemUuaHRtbCI+QXBwcm9mb25kaW1lbnRpPC9hPgo8YSBocmVmPSIuL2FyY2hpdmlvLmh0bWwiPkFyY2hpdmlvPC9hPgo8YSBocmVmPSIuL2N1cnJpY3VsdW0uaHRtbCI+TWllIGF0dGl2aXTDoCBnaW9ybmFsaXN0aWNoZTwvYT4KPGEgaHJlZj0iaHR0cHM6Ly93d3cubm9yZGVzdG5ld3MuaXQiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vb3BlbmVyIG5vcmVmZXJyZXIiPk5vcmRFc3ROZXdzLml0PC9hPgo8YSBocmVmPSJodHRwczovL211Y2tyYWNrLmNvbS9lZG9hcmRvLWdyaWRlbGxpIiB0YXJnZXQ9Il9ibGFuayIgcmVsPSJub29wZW5lciBub3JlZmVycmVyIj5NdWNrIFJhY2s8L2E+CjwvZGl2Pgo8L2Rpdj4KPHNjcmlwdD4KKGZ1bmN0aW9uKCl7CiAgdmFyIHVzZXI9ImVkb2FyZG8uZ3JpZGVsbGkyMDI2IjsKICB2YXIgZG9tYWluPSJsaWJlcm8uaXQiOwogIHZhciBtYWlsPXVzZXIrIkAiK2RvbWFpbjsKICB2YXIgYnRuPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJjb250YWN0TWFpbCIpOwogIGlmKGJ0bil7YnRuLmhyZWY9Im1haWx0bzoiK21haWw7fQp9KSgpOwo8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+Cg==" class="card-lungo-chiaro"><h2>← TORNA ALLA HOME</h2></a>
+</div>
+</div>
+</body>
+</html>
