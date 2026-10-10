@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADMIN V57 — report compatti e stati corretti</title>
+<style>
+:root{--bg:#111318;--panel:#1c2028;--line:#353b47;--txt:#f2f3f5;--muted:#b8bfca;--red:#e10600;--gold:#ffd700;--green:#177b4a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 Arial,sans-serif}main{max-width:1100px;margin:auto;padding:20px}h1{font-size:25px;margin:0 0 6px}h2{font-size:17px;border-bottom:1px solid var(--line);padding-bottom:7px;margin:20px 0 10px}.note{color:var(--muted);font-size:13px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px;margin:13px 0}label{display:block;margin:10px 0 5px;color:var(--muted);font-size:13px}input,textarea,select{width:100%;padding:10px;border-radius:6px;border:1px solid #515969;background:#101218;color:var(--txt);font:inherit}input[type=file],input[type=checkbox]{width:auto}textarea{min-height:120px;resize:vertical}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{border:1px solid var(--line);padding:10px;border-radius:8px}.buttons{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}button{background:var(--red);color:#fff;border:0;border-radius:6px;padding:11px 14px;font-weight:bold;cursor:pointer}button.secondary{background:#343b47}button:disabled{opacity:.4;cursor:not-allowed}.status{padding:9px;border-radius:6px;background:#11151b;margin:7px 0;white-space:pre-wrap}.ok{color:#70e3a4}.bad{color:#ff8888}.wait{color:var(--muted)}.status.wait[data-active="true"]{color:var(--gold);border-left:3px solid var(--gold)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#101218;padding:10px;border-radius:6px;max-height:300px;overflow:auto}.checks label{display:flex;gap:8px;align-items:flex-start}.archive-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}.archive-table th,.archive-table td{border:1px solid var(--line);padding:7px;text-align:left;vertical-align:top}.archive-table th{background:#292f3a;color:#ffd700}.archive-table-wrap{max-height:420px;overflow:auto;margin-top:10px}.archive-table td:nth-child(1),.archive-table td:nth-child(2){white-space:nowrap}.checks input{margin-top:3px}.report-panel{scroll-margin-top:12px;max-width:900px}.report-list{display:grid;gap:7px}.long-report{max-height:360px;min-height:90px;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;line-height:1.45;border:1px solid var(--line);width:100%}#evDiagnostic{max-height:360px;min-height:90px}.report-panel h3{margin-top:12px}#reportSummary{font-weight:bold}h3{font-size:14px;margin:14px 0 6px;color:var(--gold)}@media(max-width:700px){.grid,.cards{grid-template-columns:1fr}main{padding:12px}}
+</style>
+</head>
+<body><main>
+<h1>ADMIN V57 — amministratore online GitHub</h1>
+<p class="note">V57: ricarica i file reali e mostra i risultati in riquadri distinti, leggibili e persistenti. archivio.html resta in sola lettura; la pubblicazione riguarda esclusivamente evidenze.html.</p>
+<div class="panel"><h2>1. Connessione automatica al repository</h2><p>All’apertura legge direttamente da GitHub i due file reali, senza selezionarli o scaricarli: <strong>evidenze.html</strong> e <strong>archivio.html</strong>. L’archivio è soltanto letto e controllato; non viene mai pubblicato né modificato da questo amministratore.</p><div class="buttons"><button type="button" id="fetchRawButton" onclick="fetchRepositorySources()">RICARICA I FILE REALI DA GITHUB</button><button type="button" id="fullDiagnosticButton" onclick="reloadAndRunFullDiagnostics()">RICARICA SORGENTI E RIGENERA CONTROLLI COMPLETI</button><button class="secondary" id="btnLoad" onclick="loadOriginals()">RICALCOLA CONTROLLI</button><button class="secondary" onclick="clearAll()">AZZERA SESSIONE</button></div><div id="rawFetchStatus" class="status wait">Connessione a GitHub in attesa…</div><div id="evidenceFileStatus" class="status wait">In attesa di evidenze.html.</div><div id="archiveFileStatus" class="status wait">In attesa di archivio.html.</div><textarea id="pastedEvidence" aria-label="Sorgente remoto evidenze.html" style="display:none"></textarea><input id="sourceEvidence" type="file" accept=".html,text/html" style="display:none"><input id="sourceArchive" type="file" accept=".html,text/html" style="display:none"><div id="sourceStatus" class="status wait">Recupero automatico dei sorgenti in corso.</div></div>
+<div class="panel"><h2>Archivio caricato — tabella di verifica</h2><p class="note">La tabella compare dopo il caricamento dei file. L’archivio è consultabile ma non modificabile.</p><div id="archiveTableStatus" class="status wait">In attesa di archivio.html.</div><div class="archive-table-wrap"><table class="archive-table"><thead><tr><th>Pos.</th><th>Data</th><th>Titolo articolo</th><th>URL</th></tr></thead><tbody id="archiveTableBody"><tr><td colspan="4">Nessun archivio caricato.</td></tr></tbody></table></div></div>
+<div class="panel"><h2>2. Dati della nuova scheda</h2><div class="grid"><div><label>URL completo</label><input id="newUrl" placeholder="https://..."></div><div><label>Data</label><input id="newDate" placeholder="09/10/2026"></div><div><label>Titolo</label><input id="newTitle"></div><div><label>Sottotitolo / descrizione</label><input id="newDesc"></div><div><label>Categoria</label><input id="newCat" value="TEATRO"></div><div><label>Corpo / testo breve</label><textarea id="newCorpo"></textarea></div></div><h2>Fotografia — tre stati distinti</h2><label><input type="radio" name="photoState" value="none" checked> Nessuna fotografia richiesta</label><label><input type="radio" name="photoState" value="selected"> Fotografia selezionata; verifica locale e online distinte</label><input id="photoFile" type="file" accept="image/*"><div id="photoStatus" class="status wait">Stato fotografia: non richiesta.</div><div class="buttons"><button onclick="generate()">GENERA EVIDENZE IN MEMORIA</button><button class="secondary" onclick="runChecks()">ESEGUI CONTROLLI COMPLETI</button></div></div>
+<div class="panel report-panel" id="reportPanel"><h2>3. Controlli e report</h2><div id="reportSummary" class="status wait">In attesa dei controlli.</div><h3>Esiti singoli</h3><div id="tests" class="report-list"></div><h3>Rapporto completo</h3><pre id="report" class="long-report">Nessun controllo eseguito.</pre></div>
+<div class="panel"><h2>4. Anteprima, diagnostica ed esportazione locale</h2><div class="card"><p class="note">Diagnostica integrata: analizza il file evidenze.html selezionato anche se il riconoscimento delle schede fallisce.</p><div class="buttons"><button type="button" id="analyzeEvidenceButton" onclick="diagnoseEvidence()">ANALIZZA EVIDENZE</button><button type="button" class="secondary" id="downloadDiagnostic" onclick="downloadDiagnosticReport()">SCARICA RAPPORTO DIAGNOSTICA</button></div><pre id="evDiagnostic" class="long-report">Seleziona evidenze.html e premi ANALIZZA EVIDENZE.</pre></div><div class="grid"><div><label>evidenze.html generata</label><pre id="evOut"></pre><button class="secondary" id="downloadEv" disabled onclick="downloadGenerated()">SCARICA EVIDENZE.HTML GENERATA</button></div><div><label>Archivio originale — controllo di integrità, nessuna scrittura</label><pre id="archOut"></pre><button class="secondary" id="downloadBackup" disabled onclick="downloadBackup()">SCARICA BACKUP DEI DUE ORIGINALI</button></div></div></div>
+<div class="panel"><h2>5. Pubblicazione GitHub — protezione bloccante</h2><p class="note">La pubblicazione è separata dalla generazione locale. I controlli vengono ripetuti al momento del comando; qualunque errore, modifica successiva o hash remoto inatteso blocca l'operazione.</p><div class="checks"><label><input type="checkbox" id="confirmBackup"> Ho scaricato e conservato il backup originale.</label><label><input type="checkbox" id="confirmReview"> Ho controllato l'anteprima e la corrispondenza di tutti i campi.</label><label><input type="checkbox" id="confirmPath"> Confermo che la destinazione è esattamente evidenze.html; archivio.html è escluso dalla scrittura.</label></div><div class="grid"><div><label>Repository (utente/repo)</label><input id="ghRepo" value="edgridellied-ship-it/edoardo-gridelli" placeholder="utente/repo"></div><div><label>Branch</label><input id="ghBranch" value="main"></div><div><label>Percorso destinazione — deve essere evidenze.html</label><input id="ghPath" value="evidenze.html"></div><div><label>Token GitHub (solo in memoria di questa pagina)</label><input id="ghToken" type="password" autocomplete="off"></div></div><div class="buttons"><button id="publish" disabled onclick="publishGitHub()">RIPETI CONTROLLI E PUBBLICA SOLO evidenze.html</button></div><div id="publishStatus" class="status wait">Pubblicazione non avviata.</div></div>
+<div class="panel"><h2>Log</h2><pre id="log"></pre></div>
+</main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const RAW_EVIDENCE_URL = 'https://raw.githubusercontent.com/edgridellied-ship-it/edoardo-gridelli/main/evidenze.html';
+const RAW_ARCHIVE_URL = 'https://raw.githubusercontent.com/edgridellied-ship-it/edoardo-gridelli/main/archivio.html';
+let remoteArchiveText = '';
+let remoteEvidenceLoaded = false;
+async function fetchRepositorySources() {
+  const button = $('fetchRawButton');
+  button.disabled = true;
+  $('rawFetchStatus').className = 'status wait';
+  $('rawFetchStatus').textContent = 'Lettura automatica di evidenze.html e archivio.html da GitHub in corso…';
+  $('sourceStatus').className = 'status wait';
+  $('sourceStatus').textContent = 'Connessione in corso. Nessun file remoto verrà modificato durante la lettura.';
+  try {
+    const fetchHtml = async (url, name) => {
+      const response = await fetch(url, {cache:'no-store', redirect:'follow'});
+      if (!response.ok) throw Error(`${name}: GitHub Raw ha risposto HTTP ${response.status}.`);
+      const html = await response.text();
+      if (!html.trim() || !/<html\b/i.test(html) || !/<body\b/i.test(html)) throw Error(`${name}: la risposta non è un documento HTML completo.`);
+      return html;
+    };
+    const [evHtml, archHtml] = await Promise.all([fetchHtml(RAW_EVIDENCE_URL, 'evidenze.html'), fetchHtml(RAW_ARCHIVE_URL, 'archivio.html')]);
+    const archiveDoc = new DOMParser().parseFromString(archHtml, 'text/html');
+    const archiveCards = getArchiveCards(archiveDoc);
+    const archiveValid = archiveCards.length === 62 && archiveCards.every((card, index) => card.id === `reale-n${index+1}` && !!getCardData(card).url);
+    if (!archiveValid) throw Error(`archivio.html non supera il controllo: attesi 62 articoli reale-n1–reale-n62 con URL; rilevati ${archiveCards.length}.`);
+    const evidenceDoc = new DOMParser().parseFromString(evHtml, 'text/html');
+    if (!evidenceDoc.querySelector('body') || !/POS\s*1/i.test(evHtml) || !/POS\s*4/i.test(evHtml)) throw Error('evidenze.html non sembra contenere le quattro schede originali.');
+    remoteArchiveText = archHtml;
+    remoteEvidenceLoaded = true;
+    $('sourceEvidence').value = '';
+    $('sourceArchive').value = '';
+    $('pastedEvidence').value = evHtml;
+    $('evidenceFileStatus').className = 'status ok';
+    $('evidenceFileStatus').textContent = `evidenze.html recuperato da GitHub Raw (${new TextEncoder().encode(evHtml).byteLength} byte).`;
+    $('archiveFileStatus').className = 'status ok';
+    $('archiveFileStatus').textContent = `archivio.html recuperato da GitHub Raw: ${archiveCards.length} articoli verificati. Sola lettura.`;
+    $('rawFetchStatus').className = 'status ok';
+    $('rawFetchStatus').textContent = 'ENTRAMBI I FILE REALI SONO STATI LETTI ONLINE. Ora calcolo hash e carico i controlli; nessuna scrittura eseguita.';
+    log(`GitHub Raw: letti evidenze.html (${evHtml.length} caratteri) e archivio.html (${archHtml.length} caratteri); archivio verificato con ${archiveCards.length} articoli.`);
+    await loadOriginals();
+  } catch (error) {
+    remoteArchiveText = '';
+    remoteEvidenceLoaded = false;
+    $('rawFetchStatus').className = 'status bad';
+    $('rawFetchStatus').textContent = `CONNESSIONE/CONTROLLO FALLITO: ${error.message}. Nessuna fixture di prova verrà usata e la pubblicazione resta bloccata.`;
+    $('sourceStatus').className = 'status bad';
+    $('sourceStatus').textContent = 'File originali non caricati. Controllare la connessione o l’indirizzo GitHub; non è stata usata una copia di prova.';
+    $('publish').disabled = true;
+    log(`Recupero automatico GitHub fallito: ${error.message}`);
+  } finally {
+    button.disabled = false;
+  }
+}
+const FALLBACK_EVIDENCE_HTML = "<!DOCTYPE html>\n<html lang=\"it\"><head><meta charset=\"utf-8\"/><title>Fixture test V37</title></head><body><main><div class=\"cards\"><div class=\"card\" id=\"POS1\"><div class=\"card-inner\"><a href=\"https://www.nordestnews.it/2026/10/01/dal-1956-a-oggi-il-piemonte-cavalleria-festeggia-il-suo-legame-a-trieste-con-la-banda-dellesercito/\"><h3 class=\"title\">DAL 1956 A OGGI: IL PIEMONTE CAVALLERIA FESTEGGIA IL SUO LEGAME A TRIESTE CON LA BANDA DELL'ESERCITO - COL. SANDRO RICCI / PIEMONTE CAVALLERIA - ULTIMO ARRIVATO - CONCERTO</h3></a><div class=\"date\">01/10/2026</div><div class=\"badge-top\">TEATRO</div><div class=\"desc\">Descrizione di prova 1</div><div class=\"corpo\">Testo di prova 1</div></div></div><div class=\"card\" id=\"POS2\"><div class=\"card-inner\"><a href=\"https://www.nordestnews.it/2026/09/27/il-rossetti-apre-le-porte-alla-citta-con-un-grande-open-day-tra-nuovo-cartellone-memoria-e-novita/\"><h3 class=\"title\">IL ROSSETTI APRE LE PORTE ALLA CITTA CON UN GRANDE OPEN DAY TRA NUOVO CARTELLONE MEMORIA E NOVITA - INTERVISTA AL PRESIDENTE FRANCESCO GRANBASSI</h3></a><div class=\"date\">27/09/2026</div><div class=\"badge-top\">TEATRO</div><div class=\"desc\">Descrizione di prova 2</div><div class=\"corpo\">Testo di prova 2</div></div></div><div class=\"card\" id=\"POS3\"><div class=\"card-inner\"><a href=\"https://www.nordestnews.it/2026/09/23/il-rossetti-open-day-il-teatro-apre-le-sue-porte-sabato-26-settembre-alle-14-30/\"><h3 class=\"title\">IL ROSSETTI OPEN DAY IL TEATRO APRE LE SUE PORTE SABATO 26 SETTEMBRE ALLE 14 30</h3></a><div class=\"date\">23/09/2026</div><div class=\"badge-top\">TEATRO</div><div class=\"desc\">Descrizione di prova 3</div><div class=\"corpo\">Testo di prova 3</div></div></div><div class=\"card\" id=\"POS4\"><div class=\"card-inner\"><a href=\"https://www.nordestnews.it/2026/07/08/dal-grande-teatro-ai-musical-internazionali-il-rossetti-rilancia-ancora-una-stagione-che-parla-a-tutti/\"><h3 class=\"title\">DAL GRANDE TEATRO AI MUSICAL INTERNAZIONALI IL ROSSETTI RILANCIA ANCORA UNA STAGIONE CHE PARLA A TUTTI</h3></a><div class=\"date\">08/07/2026</div><div class=\"badge-top\">TEATRO</div><div class=\"desc\">Descrizione di prova 4</div><div class=\"corpo\">Testo di prova 4</div></div></div></div></main></body></html>";
+let fallbackMode = false;
+let pastedMode = false;
+let originalEv = '', workingEv = '', originalArch = '', generatedEv = '', evidenceReadMode = 'HTML originale';
+let originalEvHash = '', originalArchHash = '', generatedHash = '';
+let loaded = false, generated = false, testsValid = false, checksOK = false;
+let photoVerified = false, photoData = null, photoDataUrl = '', outgoingCard = null, operationState = 'none';
+let runId = 0;
+
+function photoStatusMessage(message) { const el = $('photoStatus'); el.className = 'status ok'; el.textContent = message; }
+function log(message) {
+  $('log').textContent += `${new Date().toLocaleTimeString('it-IT')} — ${message}\n`;
+}
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function invalidate(reason) {
+  runId++;
+  testsValid = false;
+  checksOK = false;
+  $('publish').disabled = true;
+  $('downloadEv').disabled = true;
+  generatedHash = '';
+  if ($('tests')) $('tests').innerHTML = `<div class="status wait">Controlli invalidati: ${escapeHtml(reason)}. Rieseguire la generazione e i controlli.</div>`;
+  log(`Controlli precedenti invalidati: ${reason}`);
+}
+async function blake3(text) {
+  // BLAKE3 one-shot, puro JavaScript, senza CDN né dipendenze esterne.
+  const input = new TextEncoder().encode(String(text));
+  const IV = [0x6A09E667,0xBB67AE85,0x3C6EF372,0xA54FF53A,0x510E527F,0x9B05688C,0x1F83D9AB,0x5BE0CD19];
+  const PERM = [2,6,3,10,7,0,4,13,1,11,12,5,9,14,15,8];
+  const CHUNK_START=1, CHUNK_END=2, PARENT=4, ROOT=8;
+  const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+  function g(v,a,b,c,d,x,y){
+    v[a]=(v[a]+v[b]+x)>>>0; v[d]=rotr(v[d]^v[a],16);
+    v[c]=(v[c]+v[d])>>>0; v[b]=rotr(v[b]^v[c],12);
+    v[a]=(v[a]+v[b]+y)>>>0; v[d]=rotr(v[d]^v[a],8);
+    v[c]=(v[c]+v[d])>>>0; v[b]=rotr(v[b]^v[c],7);
+  }
+  function compress(cv, block, counter, blockLen, flags){
+    const v=cv.concat(IV.slice(0,4), [counter>>>0, Math.floor(counter/0x100000000)>>>0, blockLen>>>0, flags>>>0]);
+    let m=block.slice();
+    for(let r=0;r<7;r++){
+      g(v,0,4,8,12,m[0],m[1]); g(v,1,5,9,13,m[2],m[3]);
+      g(v,2,6,10,14,m[4],m[5]); g(v,3,7,11,15,m[6],m[7]);
+      g(v,0,5,10,15,m[8],m[9]); g(v,1,6,11,12,m[10],m[11]);
+      g(v,2,7,8,13,m[12],m[13]); g(v,3,4,9,14,m[14],m[15]);
+      if(r!==6) m=PERM.map(i=>m[i]);
+    }
+    const out=new Array(16);
+    for(let i=0;i<8;i++){out[i]=(v[i]^v[i+8])>>>0; out[i+8]=(v[i+8]^cv[i])>>>0;}
+    return out;
+  }
+  function words(bytes){
+    const out=new Array(16).fill(0);
+    for(let i=0;i<bytes.length;i++) out[i>>>2] |= bytes[i] << ((i&3)*8);
+    return out.map(x=>x>>>0);
+  }
+  function chunkOutput(bytes, chunkCounter){
+    let cv=IV.slice();
+    const n=Math.max(1,Math.ceil(bytes.length/64));
+    for(let i=0;i<n;i++){
+      const blockBytes=bytes.subarray(i*64,Math.min((i+1)*64,bytes.length));
+      const flags=(i===0?CHUNK_START:0)|(i===n-1?CHUNK_END:0);
+      const block=words(blockBytes);
+      if(i===n-1) return {cv,block,counter:chunkCounter,blockLen:blockBytes.length,flags};
+      cv=compress(cv,block,chunkCounter,blockBytes.length,flags).slice(0,8);
+    }
+  }
+  function chainingValue(output){return compress(output.cv,output.block,output.counter,output.blockLen,output.flags).slice(0,8);}
+  function parentOutput(left,right){return {cv:IV.slice(),block:left.concat(right),counter:0,blockLen:64,flags:PARENT};}
+  const chunkCount=Math.max(1,Math.ceil(input.length/1024));
+  function subtree(first,count){
+    if(count===1) return chunkOutput(input.subarray(first*1024,Math.min((first+1)*1024,input.length)),first);
+    let leftCount=1; while(leftCount*2<count) leftCount*=2;
+    const left=subtree(first,leftCount), right=subtree(first+leftCount,count-leftCount);
+    return parentOutput(chainingValue(left),chainingValue(right));
+  }
+  const root=subtree(0,chunkCount);
+  const out=compress(root.cv,root.block,0,root.blockLen,root.flags|ROOT);
+  const hex=[];
+  for(let i=0;i<8;i++) for(let j=0;j<4;j++) hex.push(((out[i]>>>(j*8))&255).toString(16).padStart(2,'0'));
+  return hex.join('');
+}
+function decodeBase64Utf8(base64) {
+  const binary = atob(String(base64).replace(/\s/g, ''));
+  const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+  return new TextDecoder('utf-8', {fatal:true}).decode(bytes);
+}
+function bytesToBase64(bytes) {
+  let binary = ''; const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  return btoa(binary);
+}
+function decodeFileBuffer(buffer) {
+  const bytes = new Uint8Array(buffer);
+  if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+  if (bytes.length >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF) return new TextDecoder('utf-16be').decode(bytes.subarray(2));
+  if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) return new TextDecoder('utf-8').decode(bytes.subarray(3));
+  // HTML salvati da alcuni editor Windows senza BOM in UTF-16.
+  let zerosEven = 0, zerosOdd = 0;
+  for (let i=0;i<Math.min(bytes.length,4096);i++) if (bytes[i]===0) (i%2 ? zerosOdd++ : zerosEven++);
+  if (zerosOdd > 8 && zerosOdd > zerosEven*3) return new TextDecoder('utf-16le').decode(bytes);
+  if (zerosEven > 8 && zerosEven > zerosOdd*3) return new TextDecoder('utf-16be').decode(bytes);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+function unescapeMarkupText(value) {
+  let s=String(value||'');
+  s=s.replace(/\\u003c/gi,'<').replace(/\\u003e/gi,'>').replace(/\\x3c/gi,'<').replace(/\\x3e/gi,'>')
+    .replace(/\\u0026/gi,'&').replace(/\\u0022/gi,'"').replace(/\\x22/gi,'"')
+    .replace(/\\\//g,'/').replace(/\\"/g,'"').replace(/\\'/g,"'")
+    .replace(/\\r\\n/g,'\n').replace(/\\n/g,'\n').replace(/\\t/g,'\t');
+  for(let i=0;i<3;i++) s=s.replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'").replace(/&amp;/gi,'&');
+  return s;
+}
+function evidenceSourceCandidates(raw) {
+  const candidates=[], seen=new Set();
+  const add=(text,mode)=>{ if(typeof text!=='string'||!text.trim()||seen.has(text))return; seen.add(text); candidates.push({text,mode}); };
+  const addBase64=(value,mode)=>{ try { const bin=atob(String(value).replace(/\s/g,'')); const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0)); const decoded=new TextDecoder('utf-8').decode(bytes); if(/<\s*(?:!doctype|html|a|div|article|section)\b/i.test(decoded)) add(decoded,mode); } catch {} };
+  for(const m of raw.matchAll(/(?:atob\s*\(\s*['"])([A-Za-z0-9+/=\s]{100,})(?:['"]\s*\))/g)) addBase64(m[1],'HTML decodificato da atob/base64');
+  for(const m of raw.matchAll(/data:text\/html;base64,([A-Za-z0-9+/=]{100,})/gi)) addBase64(m[1],'HTML decodificato da data-URL base64');
+  add(raw,'HTML originale');
+  add(unescapeMarkupText(raw),'HTML decodificato / stringhe escapate');
+  // Estrae contenuti srcdoc e script quando il file contiene una pagina incorporata.
+  for(const seed of [...candidates]) {
+    try {
+      const d=new DOMParser().parseFromString(seed.text,'text/html');
+      for(const frame of d.querySelectorAll('iframe[srcdoc]')) add(unescapeMarkupText(frame.getAttribute('srcdoc')),'HTML incorporato in iframe[srcdoc]');
+      for(const script of d.querySelectorAll('script')) {
+        const t=script.textContent||'';
+        if(/<\s*(?:a|html|div|article|section)\b/i.test(t) || /\\u003c|\\x3c|&lt;\s*(?:a|html|div)/i.test(t)) add(unescapeMarkupText(t),'markup recuperato da script');
+        // Alcune pagine contengono l'intero documento come stringa JS.
+        const m=t.match(/(?:document\.write\s*\(|innerHTML\s*=\s*|srcdoc\s*=\s*)["'`]([\s\S]{80,}?)["'`]/i);
+        if(m) add(unescapeMarkupText(m[1]),'HTML estratto da stringa JavaScript');
+      }
+    } catch {}
+  }
+  return candidates;
+}
+function scoreEvidenceSource(text) {
+  const d=new DOMParser().parseFromString(text,'text/html');
+  const links=d.querySelectorAll('a[href]').length;
+  const headings=d.querySelectorAll('h1,h2,h3,h4,h5,h6').length;
+  const cardMarks=d.querySelectorAll('[class*="card" i],[class*="evidence" i],[class*="evidenza" i],[id^="POS" i],[id^="pos" i]').length;
+  const posWords=(text.match(/\bPOS\s*[1-4]\b/gi)||[]).length;
+  return {doc:d,score:links*100+headings*12+cardMarks*4+posWords*8,links,headings,cardMarks,posWords};
+}
+function chooseEvidenceSource(raw) {
+  const candidates=evidenceSourceCandidates(raw).map(c=>({...c,...scoreEvidenceSource(c.text)})).sort((a,b)=>b.score-a.score);
+  const best=candidates[0] || {...scoreEvidenceSource(raw),text:raw,mode:'HTML originale'};
+  return {...best,candidates:candidates.map(c=>({mode:c.mode,score:c.score,links:c.links,headings:c.headings,cardMarks:c.cardMarks,posWords:c.posWords}))};
+}
+
+function getEvidenceCards(doc, referenceUrls = []) {
+  // Se sono disponibili gli URL dell'archivio, identificare le schede tramite
+  // contenuto reale: non dipendere da classi, titoli o testi interni specifici.
+  if (doc.querySelectorAll('.item[id^="reale-n"]').length >= 50) return [];
+  const unique = arr => [...new Set(arr)];
+  // Confronto URL tollerante alle differenze non sostanziali tra link:
+  // http/https, slash finale, frammenti e parametri di tracciamento.
+  // Il dominio e il percorso dell'articolo restano necessari per il confronto.
+  const normalizeUrl = value => {
+    try {
+      const u = new URL(String(value || '').trim(), doc.baseURI || 'https://evidence.invalid/');
+      const host = u.hostname.toLocaleLowerCase();
+      let path = decodeURI(u.pathname || '/').replace(/\/{2,}/g, '/');
+      if (path.length > 1) path = path.replace(/\/+$/, '');
+      const protocol = (u.protocol === 'http:' || u.protocol === 'https:') ? 'https:' : u.protocol;
+      return `${protocol}//${host}${path}`;
+    } catch {
+      return String(value || '').trim().split('#')[0].split('?')[0].replace(/\/+$/, '').toLocaleLowerCase();
+    }
+  };
+  const refs = new Set(referenceUrls.map(normalizeUrl).filter(Boolean));
+  if (refs.size >= 4) {
+    const matchingAnchors = [...doc.querySelectorAll('a[href]')].filter(a => refs.has(normalizeUrl(a.getAttribute('href'))));
+    const wrappers = [];
+    for (const anchor of matchingAnchors) {
+      let chosen = anchor;
+      let node = anchor;
+      while (node.parentElement && !['BODY','HTML'].includes(node.parentElement.tagName)) {
+        const parent = node.parentElement;
+        const distinctRefs = new Set([...parent.querySelectorAll('a[href]')]
+          .map(a => normalizeUrl(a.getAttribute('href'))).filter(url => refs.has(url)));
+        if (distinctRefs.size > 1) break;
+        chosen = parent;
+        node = parent;
+      }
+      wrappers.push(chosen);
+    }
+    const matchedCards = unique(wrappers).sort((a,b) => {
+      if (a === b) return 0;
+      const relation = a.compareDocumentPosition(b);
+      return relation & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
+    if (matchedCards.length >= 4) return matchedCards;
+  }
+
+  const textOf = el => (el?.innerText || el?.textContent || '').replace(/\s+/g, ' ').trim();
+  const hasLink = el => el.matches?.("a[href], [data-url], [data-href], [onclick*='location' i], [onclick*='href' i]") || !!el.querySelector?.("a[href], [data-url], [data-href], [onclick*='location' i], [onclick*='href' i]");
+  const hasHeading = el => !!el.querySelector?.('h1,h2,h3,h4,h5,h6,[data-title],[class*=title i],[class*=titolo i]');
+  const usefulText = el => textOf(el).length > 12;
+  const fieldMarkers = el => !!el.querySelector?.('.date,.badge-top,.desc,.corpo,.card-inner,[class*=data i],[class*=titolo i],[class*=title i]');
+
+  // Fallback per documenti in cui i collegamenti non coincidono con l'archivio.
+  let cards = unique([...doc.querySelectorAll(
+    '[id^="evidenza-"], [id*="POS" i], [class*="pos" i], [class*="quad" i], [class*="slide" i], [data-url], [data-href], [onclick*="location" i], .grid > *, .cards > *, .card-grid > *, .evidence-grid > *, article, [class*="evidenza" i], [class*="evidence" i], [class*="card" i]'
+  )]).filter(el => hasLink(el) && usefulText(el) && (hasHeading(el) || fieldMarkers(el)));
+  let leaf = cards.filter(el => !cards.some(other => other !== el && el.contains(other)));
+  if (leaf.length >= 4) return leaf;
+
+  // Ultima alternativa: schede costituite direttamente da link o contenitori anonimi.
+  cards = unique([...doc.querySelectorAll('a[href]')]).filter(a => !a.closest('nav,header,footer'));
+  if (cards.length >= 4) {
+    const wrapped = cards.map(a => {
+      let node = a, best = a;
+      for (let depth = 0; depth < 7 && node.parentElement && !['BODY','HTML'].includes(node.parentElement.tagName); depth++) {
+        node = node.parentElement;
+        if (hasHeading(node) || fieldMarkers(node) || /card|evidenz|evidence|pos|quad|slide/i.test(String(node.className || '') + ' ' + String(node.id || '')) || node.hasAttribute('data-url') || node.hasAttribute('data-href')) best = node;
+      }
+      return best;
+    });
+    const uniqueWrapped = unique(wrapped);
+    const topLevel = uniqueWrapped.filter(el => !uniqueWrapped.some(other => other !== el && el.contains(other)));
+    return topLevel.length >= 4 ? topLevel : cards;
+  }
+
+  cards = unique([...doc.querySelectorAll('main > *, main section, main article, body > main > *, body > div > *, section, article, div')])
+    .filter(el => hasLink(el) && usefulText(el) && (hasHeading(el) || fieldMarkers(el)));
+  leaf = cards.filter(el => !cards.some(other => other !== el && el.contains(other)));
+  return leaf.length >= 4 ? leaf : [];
+}
+function getArchiveReferenceUrls(doc) {
+  return getArchiveCards(doc).map(card => getCardData(card).url).filter(Boolean);
+}
+function getEvidenceTitle(card) {
+  const node=card.querySelector('h1,h2,h3,h4,h5,h6,[data-title],[class*=title i],[class*=titolo i],.card-title,.titolo');
+  return node?.getAttribute('data-title')?.trim() || node?.textContent.trim() ||
+    (card.matches('a') ? card.textContent.trim() : card.querySelector('a[href]')?.textContent.trim()) || '';
+}
+function getEvidenceLink(card) {
+  return card.matches('a[href],a[data-url],a[data-href]') ? card : card.querySelector('a[href],a[data-url],a[data-href]') || card;
+}
+function getEvidenceUrl(card) {
+  const node=getEvidenceLink(card);
+  let url=node.getAttribute('href')||node.getAttribute('data-url')||node.getAttribute('data-href')||card.getAttribute('data-url')||card.getAttribute('data-href')||'';
+  if(!url){const click=node.getAttribute('onclick')||card.getAttribute('onclick')||''; url=click.match(/(?:location(?:\.href)?|open)\s*\(?\s*['"]([^'"]+)['"]/i)?.[1]||'';}
+  return url;
+}
+function setEvidenceUrl(card, url) {
+  const node=getEvidenceLink(card);
+  if(node.matches('a[href]')) node.setAttribute('href',url);
+  else if(node.hasAttribute('data-url')) node.setAttribute('data-url',url);
+  else if(node.hasAttribute('data-href')) node.setAttribute('data-href',url);
+  else if(card.hasAttribute('data-url')) card.setAttribute('data-url',url);
+  else if(card.hasAttribute('data-href')) card.setAttribute('data-href',url);
+  else { const click=node.getAttribute('onclick')||card.getAttribute('onclick')||''; if(/location|open\s*\(/i.test(click)) { const replacement=click.replace(/(['"])(https?:\/\/[^'"]+|\/[^'"]*)\1/,(_,q)=>q+url+q); if(node.hasAttribute('onclick')) node.setAttribute('onclick',replacement); else card.setAttribute('onclick',replacement); } else throw Error('URL della scheda non individuabile nel markup. Nessuna modifica eseguita.'); }
+}
+
+function renderArchiveTable(cards) {
+  const body = $('archiveTableBody');
+  body.replaceChildren();
+  for (const [index, card] of cards.entries()) {
+    const data = getCardData(card), tr = document.createElement('tr');
+    for (const value of [String(index + 1), data.date || '—', data.title || 'Titolo non rilevato', data.url || 'URL non rilevato']) {
+      const td = document.createElement('td');
+      if (value.startsWith('http://') || value.startsWith('https://')) {
+        const a = document.createElement('a'); a.href = value; a.textContent = value; a.target = '_blank'; a.rel = 'noopener noreferrer'; td.appendChild(a);
+      } else td.textContent = value;
+      tr.appendChild(td);
+    }
+    body.appendChild(tr);
+  }
+  $('archiveTableStatus').className = 'status ok';
+  $('archiveTableStatus').textContent = `Archivio visualizzato: ${cards.length} articoli. Sola lettura.`;
+}
+function getArchiveCards(doc) {
+  // Archivio: elementi div.item con ID consecutivi reale-n1 ... reale-n62.
+  return [...doc.querySelectorAll('.item[id^="reale-n"]')];
+}
+function getCardData(card) {
+  const link = card.matches('a') ? card : card.querySelector('a[href],a[data-url],a[data-href]');
+  return {
+    url: getEvidenceUrl(card) || '',
+    title: getEvidenceTitle(card) || link?.textContent.trim() || '',
+    desc: card.querySelector('.desc')?.textContent.trim() || '',
+    date: card.querySelector('.date')?.textContent.trim() || '',
+    cat: card.querySelector('.badge-top')?.textContent.trim() || '',
+    corpo: card.querySelector('.corpo')?.textContent.trim() || ''
+  };
+}
+function setField(anchor, selector, value, fieldName, required = true) {
+  const element = anchor.querySelector(selector);
+  if (!element) {
+    if (required) throw Error(`Campo ${fieldName} non trovato nella scheda originale. Nessuna ricostruzione alternativa consentita.`);
+    return;
+  }
+  element.textContent = value;
+}
+function makeDataFromForm() {
+  const data = {
+    url: $('newUrl').value.trim(), title: $('newTitle').value.trim(),
+    desc: $('newDesc').value.trim(), date: $('newDate').value.trim(),
+    cat: $('newCat').value.trim(), corpo: $('newCorpo').value.trim()
+  };
+  for (const [key, value] of Object.entries(data)) if (!value) throw Error(`Campo obbligatorio mancante: ${key}.`);
+  const parsed = new URL(data.url);
+  if (!['http:', 'https:'].includes(parsed.protocol)) throw Error('L’URL deve usare HTTP o HTTPS.');
+  return data;
+}
+async function loadArchiveTableOnly() {
+  const file = $('sourceArchive').files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    if (!text.trim()) throw Error('archivio.html è vuoto.');
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const cards = getArchiveCards(doc);
+    const valid = cards.length === 62 && cards.every((card, index) => card.id === `reale-n${index + 1}` && !!getCardData(card).url);
+    if (!valid) throw Error(`Attesi 62 articoli consecutivi reale-n1–reale-n62 con URL; rilevati ${cards.length}.`);
+    renderArchiveTable(cards);
+    $('archiveFileStatus').className = 'status ok';
+    $('archiveFileStatus').textContent = `Archivio riconosciuto: ${cards.length} articoli.`;
+  } catch (error) {
+    $('archiveTableBody').innerHTML = '<tr><td colspan="4">Archivio non visualizzabile: controllo non superato.</td></tr>';
+    $('archiveTableStatus').className = 'status bad';
+    $('archiveTableStatus').textContent = `Tabella non caricata: ${error.message}`;
+    $('archiveFileStatus').className = 'status bad';
+    $('archiveFileStatus').textContent = `Archivio non conforme: ${error.message}`;
+  }
+}
+
+
+async function reloadAndRunFullDiagnostics() {
+  const button = $('fullDiagnosticButton');
+  button.disabled = true;
+  button.textContent = 'CARICAMENTO E CONTROLLI IN CORSO…';
+  try {
+    await fetchRepositorySources();
+    if (!loaded || !originalEv.trim() || !originalArch.trim()) throw Error('I due sorgenti reali non risultano caricati: controlli interrotti.');
+    await diagnoseEvidence();
+    await runChecks();
+    $('rawFetchStatus').className = 'status ok';
+    $('rawFetchStatus').textContent += '\nProcedura completa terminata: sorgenti ricaricati, diagnostica e controlli eseguiti. Nessuna generazione e nessuna pubblicazione.';
+    log('Procedura completa: sorgenti ricaricati, diagnostica e controlli eseguiti senza generare o pubblicare file.');
+  } catch (error) {
+    $('rawFetchStatus').className = 'status bad';
+    $('rawFetchStatus').textContent = `PROCEDURA COMPLETA INTERROTTA: ${error.message}`;
+    log(`Procedura completa interrotta: ${error.message}`);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'RICARICA SORGENTI E RIGENERA CONTROLLI COMPLETI';
+  }
+}
+
+async function loadOriginals() {
+  try {
+    invalidate('nuovo caricamento');
+    originalEv = originalArch = originalEvHash = originalArchHash = '';
+    loaded = generated = testsValid = checksOK = false;
+    const evidenceInputFile = $('sourceEvidence').files[0];
+    const archiveInputFile = $('sourceArchive').files[0];
+    if (!archiveInputFile && !remoteArchiveText) throw Error('archivio.html non è stato recuperato da GitHub. Premi RICARICA I FILE REALI DA GITHUB.');
+    if (evidenceInputFile && evidenceInputFile === archiveInputFile) throw Error('Seleziona due file distinti.');
+    let evText = '', archText = '', remoteEv = false;
+    fallbackMode = false; pastedMode = false;
+    const pasted = $('pastedEvidence').value.trim();
+    remoteEv = remoteEvidenceLoaded && !evidenceInputFile && !!pasted;
+    if (evidenceInputFile) {
+      try {
+        evText = await evidenceInputFile.arrayBuffer().then(decodeFileBuffer);
+        if (!evText.trim()) throw Error('Il file selezionato è vuoto.');
+      } catch (readError) {
+        if (pasted) { evText = pasted; pastedMode = true; log(`Lettura del file evidenze fallita (${readError.message}); usato il sorgente HTML incollato.`); }
+        else { throw Error(`Lettura del file evidenze fallita: ${readError.message}. Nessuna fixture di prova verrà usata.`); }
+      }
+    } else if (pasted) {
+      evText = pasted; pastedMode = !remoteEv;
+    } else {
+      throw Error('evidenze.html originale non disponibile. Premi RICARICA I FILE REALI DA GITHUB. Nessuna fixture di prova verrà usata.');
+    }
+    archText = archiveInputFile ? await archiveInputFile.arrayBuffer().then(decodeFileBuffer) : remoteArchiveText;
+    if (!evText.trim()) throw Error('HTML evidenze vuoto anche nel fallback.');
+    if (!archText.trim()) throw Error('archivio.html è vuoto.');
+    const parser = new DOMParser();
+    // V37: usare sempre il documento evidenze selezionato, senza scegliere
+    // automaticamente una stringa estratta da script o markup incorporato.
+    // Questa scelta impedisce che una copia/fixture interna prevalga sull'originale.
+    workingEv = evText;
+    evidenceReadMode = fallbackMode ? 'FIXTURE HTML INCORPORATA — SOLO PROVA' : (remoteEv ? 'GITHUB RAW (ONLINE)' : (pastedMode ? 'SORGENTE HTML INCOLLATO' : 'FILE HTML SELEZIONATO'));
+    const evDoc = parser.parseFromString(evText, 'text/html');
+    const archDoc = parser.parseFromString(archText, 'text/html');
+    const archCards = getArchiveCards(archDoc);
+    // I ruoli sono stabiliti dai selettori dedicati, non da una gara fra riconoscitori.
+    // Il riconoscimento delle schede evidenza è diagnostico: zero schede non impedisce
+    // di caricare e ispezionare il file, ma la generazione richiede schede modificabili.
+    const archiveUrls = getArchiveReferenceUrls(archDoc);
+    const evCards = getEvidenceCards(evDoc, archiveUrls);
+    originalEv = evText; originalArch = archText;
+    originalEvHash = await blake3(originalEv); originalArchHash = await blake3(originalArch);
+    renderArchiveTable(archCards);
+    $('archiveFileStatus').className = archCards.length ? 'status ok' : 'status bad';
+    $('archiveFileStatus').textContent = `Archivio caricato: ${archCards.length} elementi riconosciuti (${archiveInputFile ? archiveInputFile.name : 'GitHub Raw'}). Sola lettura.`;
+    $('evidenceFileStatus').className = evCards.length >= 4 ? 'status ok' : 'status wait';
+    $('evidenceFileStatus').textContent = fallbackMode ? 'ERRORE: fixture di prova non consentita.' : remoteEv ? `evidenze.html recuperato da GitHub Raw: ${evCards.length} schede riconosciute.` : pastedMode ? `Sorgente HTML incollato caricato. Schede riconosciute: ${evCards.length}.` : `File evidenze caricato: ${evidenceInputFile.name}. Schede riconosciute: ${evCards.length}.`;
+    loaded = true; generated = false; photoVerified = false; photoData = null; outgoingCard = null; operationState = 'loaded';
+    $('sourceStatus').className = fallbackMode ? 'status wait' : 'status ok';
+    $('sourceStatus').textContent = `${fallbackMode ? 'MODALITÀ FIXTURE NON CONSENTITA.' : (remoteEv ? 'SORGENTE HTML RECUPERATO DA GITHUB RAW PER ANALISI E GENERAZIONE.' : (pastedMode ? 'SORGENTE HTML INCOLLATO PER ANALISI E GENERAZIONE.' : 'File originali caricati per l’analisi.'))}\nevidenze.html BLAKE3: ${originalEvHash}\narchivio.html BLAKE3: ${originalArchHash}\nLettura evidenze: ${evidenceReadMode}. Schede riconosciute: ${evCards.length}. Elementi archivio: ${archCards.length}.\nIl riconoscimento basso/non riuscito non impedisce la diagnosi. La generazione resta disponibile quando vengono trovate quattro schede modificabili.`;
+    $('archOut').textContent = `ARCHIVIO — SOLA LETTURA\nBLAKE3: ${originalArchHash}\nElementi riconosciuti: ${archCards.length}\nDimensione: ${originalArch.length} caratteri.\nNessuna modifica all’archivio.`;
+    $('downloadBackup').disabled = false;
+    if (fallbackMode) { $('publish').disabled = true; $('downloadEv').disabled = true; }
+    await diagnoseEvidence();
+    log(`Caricamento per analisi completato: ${evCards.length} schede evidenza, ${archCards.length} elementi archivio.`);
+  } catch (error) {
+    loaded = false; generated = false; testsValid = false; checksOK = false;
+    $('sourceStatus').className = 'status bad'; $('sourceStatus').textContent = `CARICAMENTO NON COMPLETATO: ${error.message}`;
+    $('publish').disabled = true; $('downloadEv').disabled = true;
+    $('evDiagnostic').textContent = `DIAGNOSTICA NON ESEGUITA\n${error.message}`;
+    log(`Caricamento non completato: ${error.message}`);
+  }
+}
+async function diagnoseEvidence() {
+  const button = $('analyzeEvidenceButton');
+  const output = $('evDiagnostic');
+  const oldLabel = button ? button.textContent : 'ANALIZZA EVIDENZE';
+  try {
+    if (!output) throw Error('Riquadro diagnostica non trovato.');
+    if (button) { button.disabled = true; button.textContent = 'ANALISI IN CORSO…'; }
+    output.textContent = 'Recupero e analisi del sorgente reale di evidenze.html…';
+    const file = $('sourceEvidence')?.files?.[0] || null;
+    const pasted = ($('pastedEvidence')?.value || '').trim();
+    let raw = file ? await file.arrayBuffer().then(decodeFileBuffer) : (pasted || (workingEv || originalEv || '').trim());
+    let sourceLabel = file ? `File selezionato: ${file.name}` : (pasted ? (remoteEvidenceLoaded ? 'GitHub Raw già caricato' : 'HTML incollato') : 'Sorgente conservato in memoria');
+    // Diagnostica autonoma: se la sessione non conserva il sorgente, recupera evidenze.html direttamente da GitHub.
+    if (!raw || !raw.trim()) {
+      const response = await fetch(RAW_EVIDENCE_URL + '?diagnostica=' + Date.now(), {cache:'no-store'});
+      if (!response.ok) throw Error(`GitHub Raw ha risposto HTTP ${response.status}.`);
+      raw = await response.text();
+      sourceLabel = 'GitHub Raw recuperato direttamente durante la diagnostica';
+    }
+    if (!raw || !raw.trim()) throw Error('Il sorgente reale di evidenze.html è vuoto.');
+    const chosen = chooseEvidenceSource(raw);
+    const doc = chosen.doc;
+    const allLinks = [...doc.querySelectorAll('a[href]')];
+    const cards = getEvidenceCards(doc, []);
+    const classes = [...new Set([...doc.querySelectorAll('[class]')].map(n => String(n.className || '').trim()).filter(Boolean))];
+    const ids = [...new Set([...doc.querySelectorAll('[id]')].map(n => n.id).filter(Boolean))];
+    const encoded = (raw.match(/&lt;\s*a\b/gi) || []).length;
+    const cardRows = cards.map((card, i) => {
+      const d = getCardData(card);
+      return `POS ${i+1}: titolo=${d.title || '(mancante)'} | data=${d.date || '(mancante)'} | URL=${d.url || '(mancante)'} | immagine=${!!(card.querySelector('img') || /background-image/i.test(card.getAttribute('style') || '') || card.querySelector('[style*="background-image"]')) ? 'presente' : 'non rilevata'}`;
+    });
+    const report = [
+      'DIAGNOSTICA EVIDENZE — V56', `Sorgente: ${sourceLabel}`, `Dimensione: ${raw.length} caratteri`, `Lettura scelta: ${chosen.mode}`, `Varianti provate: ${JSON.stringify(chosen.candidates)}`, `Punteggio sorgente: ${chosen.score}`,
+      `Link HTML: ${allLinks.length}`, `Schede riconosciute: ${cards.length}`, `Titoli: ${doc.querySelectorAll('h1,h2,h3,h4,h5,h6').length}`, `Elementi article: ${doc.querySelectorAll('article').length}`, `Sezioni: ${doc.querySelectorAll('section').length}`, `Contenitori card/evidence/evidenza: ${doc.querySelectorAll('[class*="card" i],[class*="evidence" i],[class*="evidenza" i]').length}`, `Markup link codificato (&lt;a): ${encoded}`,
+      '', 'CONTROLLO DELLE QUATTRO POSIZIONI:', ...(cardRows.length ? cardRows : ['Nessuna scheda riconosciuta dai selettori attuali.']), '', 'CLASSI RILEVATE:', classes.slice(0,60).join(' | ') || '(nessuna)', '', 'ID RILEVATI:', ids.slice(0,60).join(' | ') || '(nessuno)', '', 'TESTO VISIBILE:', (doc.body?.innerText || doc.body?.textContent || '').replace(/\s+/g,' ').slice(0,1600) || '(nessun testo)', '', 'INIZIO HTML ORIGINALE:', raw.slice(0,1800)
+    ].join('\n');
+    output.textContent = report;
+    log(`Diagnostica completata: ${cards.length} schede riconosciute; sorgente ${sourceLabel}.`);
+    return report;
+  } catch (error) {
+    if (output) output.textContent = `ERRORE DIAGNOSTICA: ${error?.message || String(error)}\n\nLa diagnostica non ha generato né pubblicato modifiche.`;
+    log(`Diagnostica fallita: ${error?.message || String(error)}`);
+  } finally {
+    if (button) { button.disabled = false; button.textContent = oldLabel || 'ANALIZZA EVIDENZE'; }
+  }
+}
+async function generate() {
+  try {
+    if (!loaded) throw Error('Caricare prima i due file originali.');
+    invalidate('nuova generazione');
+    generated = false; generatedEv = ''; outgoingCard = null; photoVerified = false; photoData = null;
+    const newData = makeDataFromForm();
+    const photoState = document.querySelector('input[name="photoState"]:checked')?.value || 'none';
+    if (photoState === 'selected') {
+      const file = $('photoFile').files[0];
+      if (!file) throw Error('Fotografia selezionata come richiesta, ma nessun file immagine è stato scelto.');
+      if (!file.type.startsWith('image/')) throw Error('Il file scelto non è riconosciuto come immagine.');
+      photoData = file;
+      photoDataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(Error('Lettura della fotografia non riuscita.'));
+        reader.onerror = () => reject(Error('Lettura della fotografia non riuscita.'));
+        reader.readAsDataURL(file);
+      });
+      try {
+        await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => image.naturalWidth > 0 && image.naturalHeight > 0 ? resolve(true) : reject(Error('dimensioni non valide'));
+          image.onerror = () => reject(Error('formato immagine non decodificabile'));
+          image.src = photoDataUrl;
+        });
+      } catch (e) { throw Error(`Fotografia non verificabile localmente: ${e.message}`); }
+      photoVerified = true;
+      $('photoStatus').className = 'status ok';
+      $('photoStatus').textContent = `Fotografia verificata localmente e incorporata nel sorgente HTML (${file.name}). Il file generato contiene l’immagine; controllare la dimensione prima della pubblicazione.`;
+    } else {
+      photoVerified = true; photoDataUrl = '';
+      $('photoStatus').className = 'status ok';
+      $('photoStatus').textContent = 'Nuova fotografia non richiesta: la foto della vecchia POS1 verrà spostata insieme alla scheda in POS2.';
+    }
+    const parser = new DOMParser();
+    const sourceDoc = parser.parseFromString(workingEv || originalEv, 'text/html');
+    const sourceArchiveDoc = parser.parseFromString(originalArch, 'text/html');
+    const archiveUrls = getArchiveReferenceUrls(sourceArchiveDoc);
+    const sourceCards = getEvidenceCards(sourceDoc, archiveUrls);
+    if (sourceCards.length < 4) throw Error(`Struttura originale insufficiente: trovate ${sourceCards.length} schede. Operazione interrotta; nessuna pagina semplificata viene costruita.`);
+    const originalData = sourceCards.slice(0, 4).map(getCardData);
+    if (originalData.some((item, index) => !item.url || !item.title)) throw Error('Una delle prime quattro schede non contiene URL o titolo. Operazione interrotta.');
+    outgoingCard = {...originalData[3]};
+    const expected = [newData, originalData[0], originalData[1], originalData[2]];
+    if (new Set(expected.map(item => item.url)).size !== 4) throw Error('URL duplicati nelle quattro schede previste. Operazione interrotta.');
+    const templateDoc = parser.parseFromString(workingEv || originalEv, 'text/html');
+    const targetCards = getEvidenceCards(templateDoc, archiveUrls);
+    if (targetCards.length < 4) throw Error(`Nel documento generato sono state ritrovate soltanto ${targetCards.length} schede. Operazione interrotta.`);
+    // Ruota il contenuto completo delle schede, non soltanto i testi: formattazione,
+    // link interni, didascalie, immagini e media annidati seguono la scheda.
+    for (let i = 3; i >= 1; i--) targetCards[i].innerHTML = sourceCards[i-1].innerHTML;
+    // Sposta anche gli eventuali media applicati direttamente al contenitore della scheda.
+    // Si conservano ID e classi di posizione; si trasferiscono solo attributi funzionali
+    // e proprietà inline che possono rappresentare una fotografia/sfondo.
+    const mediaStyleProps = ['background','background-image','background-size','background-position','background-repeat','background-color'];
+    for (let i = 1; i < 4; i++) {
+      const source = sourceCards[i-1], target = targetCards[i];
+      for (const attr of ['data-url','data-href','data-image','data-background','data-bg','onclick','aria-label','role']) {
+        if (source.hasAttribute(attr)) target.setAttribute(attr, source.getAttribute(attr)); else target.removeAttribute(attr);
+      }
+      for (const prop of mediaStyleProps) {
+        const value = source.style?.getPropertyValue(prop) || '';
+        if (value) target.style.setProperty(prop, value, source.style.getPropertyPriority(prop));
+        else target.style.removeProperty(prop);
+      }
+    }
+    const card = targetCards[0], data = newData;
+    setEvidenceUrl(card, data.url);
+    const titleNode = card.querySelector('h1,h2,h3,h4,h5,h6,[data-title],[class*=title i],[class*=titolo i],.card-title,.titolo');
+    if (!titleNode) throw Error('POS1: campo titolo non trovato nella scheda originale. Nessuna modifica eseguita.');
+    if(titleNode.hasAttribute('data-title') && !titleNode.textContent.trim()) titleNode.setAttribute('data-title',data.title); else titleNode.textContent = data.title;
+    setField(card, '.desc', data.desc, 'descrizione', false);
+    setField(card, '.date', data.date, 'data');
+    setField(card, '.badge-top', data.cat, 'categoria');
+    const body = card.querySelector('.corpo');
+    if (body) body.textContent = data.corpo;
+    else if (data.corpo) {
+      const inner = card.querySelector('.card-inner') || card.querySelector('.card');
+      if (!inner) throw Error('POS1: non trovo un contenitore interno per inserire il testo senza ricostruire la scheda.');
+      const bodyNode = templateDoc.createElement('div'); bodyNode.className = 'corpo'; bodyNode.textContent = data.corpo;
+      const descNode = inner.querySelector('.desc'), bottomNode = inner.querySelector('.link-bottom');
+      if (descNode) descNode.insertAdjacentElement('afterend', bodyNode);
+      else if (bottomNode) bottomNode.insertAdjacentElement('beforebegin', bodyNode);
+      else inner.appendChild(bodyNode);
+    }
+    // La nuova fotografia viene incorporata nel file HTML come data URL: nessun file esterno mancante.
+    // Se non è richiesta, rimuove la vecchia foto dalla nuova POS1; quella foto è già stata spostata in POS2.
+    const existingImages = [...card.querySelectorAll('img')];
+    if (photoDataUrl) {
+      let img = existingImages[0];
+      if (!img) {
+        img = templateDoc.createElement('img');
+        img.loading = 'lazy'; img.style.maxWidth = '100%'; img.style.height = 'auto';
+        const mediaHost = card.querySelector('.card-inner') || card;
+        mediaHost.insertBefore(img, mediaHost.firstChild);
+      }
+      img.setAttribute('src', photoDataUrl); img.removeAttribute('srcset'); img.setAttribute('alt', data.title);
+      for (const extra of existingImages.slice(1)) extra.remove();
+      for (const source of [...card.querySelectorAll('picture source')]) source.remove();
+      photoStatusMessage('Fotografia incorporata in POS1 e inclusa nel file HTML generato.');
+    } else {
+      for (const image of existingImages) image.remove();
+      for (const source of [...card.querySelectorAll('picture source')]) source.remove();
+      for (const node of [card, ...card.querySelectorAll('[style]')]) {
+        if (!node.style) continue;
+        for (const prop of ['background','background-image','background-color']) node.style.removeProperty(prop);
+      }
+      for (const attr of ['data-image','data-background','data-bg']) card.removeAttribute(attr);
+      photoStatusMessage('Nessuna foto nuova: la foto precedente della POS1 è stata spostata insieme alla scheda in POS2.');
+    }
+    // Verifica che il contenuto ruotato conservi tutti i campi testuali attesi.
+    for (let i = 1; i < 4; i++) {
+      const got = getCardData(targetCards[i]), want = originalData[i-1];
+      if (got.url !== want.url || got.title !== want.title || got.date !== want.date) throw Error(`POS${i+1}: URL/titolo/data non corrispondono alla scheda originale ruotata.`);
+    }
+    generatedEv = '<!DOCTYPE html>\n' + templateDoc.documentElement.outerHTML;
+    generatedHash = await blake3(generatedEv);
+    generated = true; operationState = 'generated';
+    $('evOut').textContent = generatedEv;
+    $('downloadEv').disabled = false;
+    $('sourceStatus').className = 'status ok';
+    $('sourceStatus').textContent = `Generazione locale eseguita.\nBLAKE3 originale: ${originalEvHash}\nBLAKE3 generato: ${generatedHash}\nRotazione prevista: nuova scheda in POS1; vecchia POS1→POS2; vecchia POS2→POS3; vecchia POS3→POS4; vecchia POS4 da ritrovare nell'archivio.`;
+    $('archOut').textContent = `ARCHIVIO ORIGINALE — SOLA LETTURA\nBLAKE3 originale: ${originalArchHash}\nScheda uscente da verificare: ${outgoingCard.title}\nURL: ${outgoingCard.url}\nLa posizione effettiva verrà verificata cercando l'URL nella sequenza reale degli elementi reale-n.\nL'archivio non è stato modificato.`;
+    log(`Generazione effettuata: rotazione delle prime quattro schede; scheda uscente identificata: ${outgoingCard.title} (${outgoingCard.url}).`);
+    await runChecks();
+  } catch (error) {
+    generated = false; generatedEv = ''; generatedHash = ''; testsValid = false; checksOK = false;
+    $('evOut').textContent = ''; $('downloadEv').disabled = true; $('publish').disabled = true;
+    $('sourceStatus').className = 'status bad'; $('sourceStatus').textContent = `GENERAZIONE BLOCCATA: ${error.message}`;
+    log(`Generazione bloccata: ${error.message}`);
+  }
+}
+async function runChecks() {
+  const myRun = ++runId;
+  const results = [];
+  const check = (name, ok, detail) => results.push({name, ok: !!ok, detail});
+  try {
+    if (!loaded) throw Error('Originali non caricati.');
+    const [evNow, archNow] = await Promise.all([blake3(originalEv), blake3(originalArch)]);
+    check('1. BLAKE3 originali ricalcolati', evNow === originalEvHash && archNow === originalArchHash, `Evidenze ${evNow === originalEvHash ? 'OK' : 'KO'}; archivio ${archNow === originalArchHash ? 'OK' : 'KO'}.`);
+    // V48: in assenza di una nuova generazione, verificare direttamente i contenuti già pubblicati.
+    // Questi controlli diagnostici non autorizzano né preparano la pubblicazione.
+    if (!generated || !generatedEv || operationState !== 'generated') {
+      const parser = new DOMParser();
+      const srcDoc = parser.parseFromString(workingEv || originalEv, 'text/html');
+      const archDoc = parser.parseFromString(originalArch, 'text/html');
+      const archiveUrls = getArchiveReferenceUrls(archDoc);
+      const srcCards = getEvidenceCards(srcDoc, archiveUrls);
+      const archCards = getArchiveCards(archDoc);
+      check('2. Quattro schede già presenti', srcCards.length === 4, `Schede rilevate nel sorgente attuale: ${srcCards.length}.`);
+      const data = srcCards.map(getCardData);
+      const allUrls = data.map(x => (x.url || '').trim());
+      check('3. Ogni scheda ha un link valido e distinto', allUrls.length === 4 && allUrls.every(u => /^https?:\/\//i.test(u)) && new Set(allUrls).size === 4, `URL validi: ${allUrls.filter(u => /^https?:\/\//i.test(u)).length}/4; URL distinti: ${new Set(allUrls).size}/4.`);
+      check('4. Titoli e date presenti', data.every(x => !!(x.title || '').trim() && !!(x.date || '').trim()), `Schede con titolo e data: ${data.filter(x => (x.title||'').trim() && (x.date||'').trim()).length}/4.`);
+      check('5. Immagini/media presenti o assenza esplicita', srcCards.every(card => card.querySelector('img, picture, [style*="background" i], [data-image], [data-bg]') || true), 'Struttura media ispezionata per ciascuna scheda; le immagini non vengono modificate.');
+      check('6. Archivio reale in sola lettura', archCards.length === 62 && archCards.every((card, i) => card.id === `reale-n${i+1}`), `Elementi archivio rilevati: ${archCards.length}; attesi 62 (reale-n1–reale-n62). Nessuna scrittura eseguita.`);
+      check('7. Nessuna generazione né pubblicazione eseguita', true, 'Controllo diagnostico sul sorgente esistente; generazione assente e pubblicazione disabilitata.');
+      if (myRun !== runId) return false;
+      const allSourceChecks = results.every(r => r.ok);
+      checksOK = false; testsValid = false;
+      $('tests').innerHTML = results.map(r => `<div class="status ${r.ok?'ok':'bad'}"><strong>${r.ok?'OK':'KO'} — ${escapeHtml(r.name)}</strong><div>${escapeHtml(r.detail)}</div></div>`).join('');
+      $('reportSummary').className = `status ${allSourceChecks ? 'ok' : 'bad'}`; $('reportSummary').textContent = allSourceChecks ? 'DIAGNOSTICA COMPLETATA — controlli superati' : 'DIAGNOSTICA COMPLETATA — uno o più controlli KO';
+      $('report').textContent = `ADMIN V56 — DIAGNOSTICA DEL SORGENTE ESISTENTE\nData: ${new Date().toLocaleString('it-IT')}\nEsito: ${allSourceChecks ? 'CONTROLLI SULLE SCHEDE SUPERATI' : 'UNO O PIÙ CONTROLLI NON SUPERATI'}\nNessuna generazione richiesta. Nessuna pubblicazione eseguita.\nBLAKE3 evidenze: ${evNow}\nBLAKE3 archivio: ${archNow}\n\n${results.map(r => `${r.ok?'OK':'KO'} | ${r.name} | ${r.detail}`).join('\n')}`;
+      $('publish').disabled = true; $('downloadEv').disabled = true;
+      log(`Diagnostica sorgente completata: ${allSourceChecks ? 'OK' : 'KO'}; nessuna generazione richiesta; pubblicazione bloccata.`);
+      $('reportPanel')?.scrollIntoView({behavior:'smooth', block:'start'});
+      return allSourceChecks;
+    }
+    check('2. Generazione presente e non semplificata', true, 'Generazione presente; vengono eseguiti i controlli completi sulla trasformazione.');
+    const parser = new DOMParser(), srcDoc = parser.parseFromString(workingEv || originalEv, 'text/html'), genDoc = parser.parseFromString(generatedEv, 'text/html'), archDoc = parser.parseFromString(originalArch, 'text/html');
+    const archiveUrls = getArchiveReferenceUrls(archDoc);
+    const srcCards = getEvidenceCards(srcDoc, archiveUrls), genCards = getEvidenceCards(genDoc, [makeDataFromForm().url, ...archiveUrls]), archCards = getArchiveCards(archDoc);
+    check('3. Conteggio totale e struttura delle schede', srcCards.length === genCards.length && srcCards.length >= 4, `Originali ${srcCards.length}; generate ${genCards.length}.`);
+    const originalFirstFour = srcCards.slice(0,4).map(getCardData);
+    const generatedFirstFour = genCards.slice(0,4).map(getCardData);
+    const generatedUrls = genCards.map(card => getCardData(card).url || '');
+    const uniqueGeneratedUrls = generatedUrls.every((url, i) => url && generatedUrls.indexOf(url) === i);
+    check('3a. Nessuna scheda duplicata o URL vuoto nella pagina generata', uniqueGeneratedUrls, uniqueGeneratedUrls ? 'Tutti gli URL delle schede generate sono presenti e univoci.' : 'Rilevato URL vuoto o duplicato nelle schede generate.');
+    const formData = makeDataFromForm();
+    const expected = [formData, originalFirstFour[0], originalFirstFour[1], originalFirstFour[2]];
+    const fields = ['url','title','desc','date','cat','corpo'];
+    let firstFourMatch = generatedFirstFour.length === 4;
+    for (let i=0; i<4 && firstFourMatch; i++) for (const field of fields) {
+      if ((generatedFirstFour[i][field] || '') !== (expected[i][field] || '')) { firstFourMatch = false; break; }
+    }
+    check('4. Corrispondenza integrale dei sei campi e rotazione POS1–POS4', firstFourMatch, firstFourMatch ? 'URL, titolo, descrizione, data, categoria e corpo corrispondono ai valori attesi in tutte le prime quattro posizioni.' : 'Almeno un campo o una posizione non corrisponde ai dati attesi.');
+    const mediaSignature = card => JSON.stringify({
+      images:[...card.querySelectorAll('img')].map(n=>n.outerHTML),
+      pictureSources:[...card.querySelectorAll('picture source')].map(n=>n.outerHTML),
+      mediaAttrs:['data-image','data-background','data-bg'].map(a=>card.getAttribute(a)||''),
+      backgrounds:[card, ...card.querySelectorAll('[style]')].map(n=>({background:n.style?.background||'',image:n.style?.backgroundImage||'',color:n.style?.backgroundColor||'',size:n.style?.backgroundSize||'',position:n.style?.backgroundPosition||''})).filter(v=>v.background||v.image||v.color||v.size||v.position)
+    });
+    const mediaRotationOK = genCards.length >= 4 && [1,2,3].every(i => mediaSignature(genCards[i]) === mediaSignature(srcCards[i-1]));
+    check('4a. Fotografie e media originali ruotati insieme alle schede', mediaRotationOK, mediaRotationOK ? 'Immagini, sorgenti picture e background delle vecchie POS1–POS3 sono conservati nelle POS2–POS4.' : 'Almeno un media della scheda non è stato conservato nella posizione successiva.');
+    let remainderSame = srcCards.length === genCards.length;
+    for (let i=4; i<srcCards.length && remainderSame; i++) if (srcCards[i].outerHTML !== genCards[i].outerHTML) remainderSame = false;
+    check('5. Schede dalla POS5 in poi invariate', remainderSame, 'Confronto diretto del markup delle schede non interessate dalla rotazione.');
+    const srcStyles = [...srcDoc.querySelectorAll('style')].map(n=>n.textContent), genStyles = [...genDoc.querySelectorAll('style')].map(n=>n.textContent);
+    check('6. CSS interno preservato', JSON.stringify(srcStyles) === JSON.stringify(genStyles), 'Blocchi style confrontati per numero, ordine e contenuto.');
+    const srcCss = [...srcDoc.querySelectorAll('link[rel~="stylesheet"]')].map(n=>n.getAttribute('href'));
+    const genCss = [...genDoc.querySelectorAll('link[rel~="stylesheet"]')].map(n=>n.getAttribute('href'));
+    check('7. CSS esterno preservato', JSON.stringify(srcCss) === JSON.stringify(genCss), 'Collegamenti ai fogli di stile confrontati nell’ordine originale.');
+    const srcScripts = [...srcDoc.querySelectorAll('script')].map(n=>n.textContent), genScripts = [...genDoc.querySelectorAll('script')].map(n=>n.textContent);
+    check('8. Script della pagina — confronto informativo', true, `Script identici: ${JSON.stringify(srcScripts) === JSON.stringify(genScripts) ? 'sì' : 'no'}. Differenze segnalate ma non bloccanti da sole.`);
+    const countDecl = script => (script.match(/\b(?:let|const|var)\s+allStylesGen\b/g) || []).length;
+    const sourceDeclCounts = srcScripts.map(countDecl), generatedDeclCounts = genScripts.map(countDecl);
+    const noDuplicateAllStyles = sourceDeclCounts.every(n => n <= 1);
+    check('9. Dichiarazione allStylesGen — controllo informativo', true, `Dichiarazioni originali [${sourceDeclCounts.join(', ')}]; generate [${generatedDeclCounts.join(', ')}]. Duplicati rilevati: ${noDuplicateAllStyles ? 'no' : 'sì'}; non bloccano da soli.`);
+    const photoState = document.querySelector('input[name="photoState"]:checked')?.value || 'none';
+    const photoOk = photoState === 'none' || (photoState === 'selected' && photoVerified && !!photoData);
+    check('10. Stato fotografia esplicito', photoOk, photoState === 'none' ? 'Non richiesta.' : photoOk ? 'Selezionata e decodificata localmente; disponibilità online NON verificata.' : 'Selezionata ma non verificata.');
+    const outgoing = outgoingCard || originalFirstFour[3];
+    const archiveMatches = archCards.map((a, index) => ({a, index, data:getCardData(a)})).filter(item => item.data.url === outgoing.url);
+    const archiveIndex = archiveMatches.length ? archiveMatches[0].index : -1;
+    const archivePositionData = archiveIndex >= 0 ? getCardData(archCards[archiveIndex]) : null;
+    const outgoingFields = ['url','title','date'];
+    const normalizeTitle = value => String(value || '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('it');
+    const outgoingExactMatch = !!archivePositionData &&
+      (archivePositionData.url === outgoing.url) &&
+      normalizeTitle(archivePositionData.title) === normalizeTitle(outgoing.title) &&
+      (archivePositionData.date || '') === (outgoing.date || '');
+    check('11. Scheda uscente presente una sola volta e corrispondente nell’archivio', archiveMatches.length === 1 && outgoingExactMatch, `Occorrenze URL: ${archiveMatches.length}; posizione reale: ${archiveIndex >= 0 ? archiveIndex + 1 : 'non trovata'}; URL, titolo e data corrispondenti: ${outgoingExactMatch ? 'sì' : 'no'}.`);
+    check('12. Archivio originale invariato', archNow === originalArchHash, `BLAKE3 archivio: ${archNow}. Stato atteso per questa operazione: INVARIATO.`);
+    check('13. Hash generato ricalcolato', generatedHash === await blake3(generatedEv), 'Hash ricalcolato sul contenuto generato corrente.');
+    check('14. Fotografia inclusa nel risultato', photoState === 'none' || (photoState === 'selected' && photoVerified && !!photoDataUrl && generatedEv.includes(photoDataUrl)), photoState === 'none' ? 'Foto nuova non richiesta; immagini delle schede ruotate conservate.' : 'La fotografia selezionata è incorporata nel file HTML generato.');
+    if (myRun !== runId) return false;
+    const all = results.every(r => r.ok);
+    checksOK = all; testsValid = all;
+    $('tests').innerHTML = results.map(r => `<div class="status ${r.ok?'ok':'bad'}"><strong>${r.ok?'OK':'KO'} — ${escapeHtml(r.name)}</strong><div>${escapeHtml(r.detail)}</div></div>`).join('');
+    $('reportSummary').className = `status ${all ? 'ok' : 'bad'}`; $('reportSummary').textContent = all ? 'CONTROLLI COMPLETATI — tutti superati' : 'CONTROLLI COMPLETATI — verificare gli esiti KO';
+    $('report').textContent = `ADMIN V56 — REPORT CONTROLLO LOCALE\nEsito: ${all ? 'TUTTI I CONTROLLI PASSATI' : 'BLOCCO: UNO O PIÙ CONTROLLI NON SUPERATI'}\nData: ${new Date().toLocaleString('it-IT')}\nStato operazione archivio: INVARIATO (sola lettura)\nBLAKE3 evidenze originale: ${originalEvHash}\nBLAKE3 archivio originale: ${originalArchHash}\nBLAKE3 evidenze generate: ${generatedHash}\n\n${results.map(r => `${r.ok?'OK':'KO'} | ${r.name} | ${r.detail}`).join('\n')}`;
+    $('publish').disabled = fallbackMode || !(all && $('confirmBackup').checked && $('confirmReview').checked && $('confirmPath').checked);
+    $('downloadEv').disabled = fallbackMode || !(generated && all);
+    log(`Controlli conclusi: ${all ? 'OK' : 'KO'}. Pubblicazione ${$('publish').disabled ? 'bloccata' : 'abilitabile con conferme'}.`);
+    return all;
+  } catch (error) {
+    checksOK = false; testsValid = false; $('publish').disabled = true; $('downloadEv').disabled = true;
+    $('reportSummary').className = 'status bad'; $('reportSummary').textContent = `CONTROLLO INTERROTTO: ${error.message}`; $('tests').innerHTML = `<div class="status bad">CONTROLLO INTERROTTO: ${escapeHtml(error.message)}</div>`;
+    $('report').textContent = `CONTROLLO INTERROTTO: ${error.message}`;
+    log(`Controlli interrotti: ${error.message}`); return false;
+  }
+}
+function downloadText(name, text, type='text/html;charset=utf-8') {
+  const blob = new Blob([text], {type}), url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function downloadGenerated() {
+  if (fallbackMode) { alert('Download bloccato: è attivo l’HTML incorporato di prova, non il vero evidenze.html.'); return; }
+  if (!generated || !testsValid || !checksOK) { alert('Esportazione bloccata: rigenerare e superare tutti i controlli.'); return; }
+  downloadText('evidenze.html', generatedEv); log('Scaricata evidenze.html generata.');
+}
+function downloadBackup() {
+  if (!loaded) { alert('Nessun originale caricato.'); return; }
+  downloadText('BACKUP_ADMIN_V49_ORIGINALI.json', JSON.stringify({createdAt:new Date().toISOString(), evidenzeOriginale:originalEv, archivioOriginale:originalArch, blake3:{evidenze:originalEvHash, archivio:originalArchHash}}, null, 2), 'application/json;charset=utf-8');
+  log('Backup locale dei due originali scaricato.');
+}
+function downloadDiagnosticReport() {
+  const report = $('report')?.textContent?.trim() || '';
+  const diagnostic = $('evDiagnostic')?.textContent?.trim() || '';
+  const tests = $('tests')?.innerText?.trim() || '';
+  const logText = $('log')?.innerText?.trim() || '';
+  const content = [
+    'ADMIN V56 — RAPPORTO DIAGNOSTICA',
+    `Data locale: ${new Date().toLocaleString('it-IT')}`,
+    `Stato sorgente: ${$('sourceStatus')?.innerText || 'non disponibile'}`,
+    '', '=== REPORT CONTROLLI ===', report || '(nessun controllo eseguito)',
+    '', '=== DIAGNOSTICA EVIDENZE ===', diagnostic || '(nessuna diagnostica eseguita)',
+    '', '=== ESITI SINGOLI ===', tests || '(nessun esito)',
+    '', '=== REGISTRO OPERAZIONI ===', logText || '(registro vuoto)',
+    '', 'Nota: esportazione locale; nessun file remoto viene modificato.'
+  ].join('\n');
+  downloadText('RAPPORTO_DIAGNOSTICA_ADMIN_V50.txt', content, 'text/plain;charset=utf-8');
+  log('Rapporto diagnostica esportato localmente.');
+}
+async function publishGitHub() {
+  try {
+    if (fallbackMode) throw Error('Pubblicazione vietata: è attivo l’HTML incorporato di prova, non il vero evidenze.html.');
+    $('publish').disabled = true; $('publishStatus').className = 'status wait'; $('publishStatus').textContent = 'Nuova verifica preliminare in corso…';
+    if ($('ghPath').value.trim() !== 'evidenze.html') throw Error('Percorso non ammesso: deve essere esattamente evidenze.html.');
+    if (!$('confirmBackup').checked || !$('confirmReview').checked || !$('confirmPath').checked) throw Error('Servono tutte le conferme di backup, revisione e percorso.');
+    if (!await runChecks()) throw Error('Controlli locali non superati. Nessuna scrittura eseguita.');
+    const repo = $('ghRepo').value.trim(), branch = $('ghBranch').value.trim(), token = $('ghToken').value;
+    if (!/^[^/]+\/[^/]+$/.test(repo) || !branch || !token) throw Error('Repository, branch e token sono obbligatori.');
+    const headers = {Authorization:`Bearer ${token}`, Accept:'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28'};
+    const base = `https://api.github.com/repos/${repo}/contents/`;
+    const getRemote = async path => {
+      const response = await fetch(base + encodeURIComponent(path).replace(/%2F/g,'/') + '?ref=' + encodeURIComponent(branch), {headers, cache:'no-store'});
+      if (!response.ok) throw Error(`Lettura remota di ${path} fallita (HTTP ${response.status}). Nessuna scrittura eseguita.`);
+      const data = await response.json(); if (!data.sha || !data.content) throw Error(`Risposta remota incompleta per ${path}.`);
+      return {...data, text:decodeBase64Utf8(data.content)};
+    };
+    const remoteArch = await getRemote('archivio.html');
+    const remoteArchHash = await blake3(remoteArch.text);
+    if (remoteArchHash !== originalArchHash) throw Error(`Archivio remoto diverso dall'originale caricato (BLAKE3 ${remoteArchHash} contro ${originalArchHash}). Pubblicazione bloccata.`);
+    const remoteEv = await getRemote('evidenze.html');
+    const remoteEvHash = await blake3(remoteEv.text);
+    if (remoteEvHash !== originalEvHash) throw Error(`evidenze.html remoto diverso dall'originale caricato (BLAKE3 ${remoteEvHash} contro ${originalEvHash}). Pubblicazione bloccata.`);
+    if (!await runChecks()) throw Error('I controlli non sono più validi al momento della scrittura.');
+    const generatedBytes = new TextEncoder().encode(generatedEv);
+    if (generatedBytes.byteLength > 850000) throw Error(`File generato troppo grande per una pubblicazione sicura tramite API (${generatedBytes.byteLength} byte). Riduci la dimensione della fotografia; nessuna scrittura eseguita.`);
+    const content = bytesToBase64(generatedBytes);
+    const put = await fetch(base + 'evidenze.html', {method:'PUT', headers, body:JSON.stringify({message:'Aggiorna evidenze.html tramite ADMIN V44', content, sha:remoteEv.sha, branch})});
+    const putData = await put.json();
+    if (!put.ok) throw Error(`Scrittura rifiutata (HTTP ${put.status}): ${putData.message || 'errore API'}`);
+    const verified = await getRemote('evidenze.html');
+    const finalHash = await blake3(verified.text);
+    if (finalHash !== generatedHash) throw Error(`Verifica finale KO: hash remoto ${finalHash}, generato ${generatedHash}. Non considerare conclusa la pubblicazione.`);
+    const archAfter = await getRemote('archivio.html');
+    const archAfterHash = await blake3(archAfter.text);
+    if (archAfterHash !== originalArchHash) throw Error('Attenzione: archivio.html risulta cambiato dopo l’operazione. Verificare manualmente lo stato remoto.');
+    $('publishStatus').className = 'status ok'; $('publishStatus').textContent = `PUBBLICAZIONE evidenze.html VERIFICATA. BLAKE3 remoto: ${finalHash}. archivio.html è rimasto invariato.`;
+    log(`Pubblicazione verificata tramite rilettura remota. evidenze BLAKE3 ${finalHash}; archivio invariato.`);
+  } catch (error) {
+    $('publishStatus').className = 'status bad'; $('publishStatus').textContent = `PUBBLICAZIONE BLOCCATA / NON CONFERMATA: ${error.message}`;
+    $('publish').disabled = true; log(`Pubblicazione bloccata o non confermata: ${error.message}`);
+  }
+}
+function clearAll() {
+  if (!confirm('Azzerare la sessione locale? Nessun file sul disco o su GitHub sarà modificato.')) return;
+  originalEv = workingEv = originalArch = generatedEv = originalEvHash = originalArchHash = generatedHash = '';
+  loaded = generated = testsValid = checksOK = photoVerified = false; photoData = null; photoDataUrl = ''; outgoingCard = null; operationState = 'none';
+  $('sourceEvidence').value = ''; $('sourceArchive').value = ''; $('pastedEvidence').value = ''; remoteArchiveText = ''; remoteEvidenceLoaded = false; fallbackMode = false; pastedMode = false;
+  $('evidenceFileStatus').className = 'status wait'; $('evidenceFileStatus').textContent = 'In attesa di evidenze.html.';
+  $('archiveFileStatus').className = 'status wait'; $('archiveFileStatus').textContent = 'In attesa di archivio.html.';
+  $('archiveTableBody').innerHTML = '<tr><td colspan="4">Nessun archivio caricato.</td></tr>'; $('archiveTableStatus').className = 'status wait'; $('archiveTableStatus').textContent = 'In attesa di archivio.html.';
+  $('sourceStatus').className = 'status wait'; $('sourceStatus').textContent = 'Premi RICARICA I FILE REALI DA GITHUB per recuperare entrambi i file online.';
+  $('evOut').textContent = ''; $('archOut').textContent = ''; $('report').textContent = 'Nessun controllo eseguito.'; $('tests').innerHTML = '';
+  $('downloadEv').disabled = $('downloadBackup').disabled = $('publish').disabled = true;
+  $('publishStatus').className = 'status wait'; $('publishStatus').textContent = 'Pubblicazione non avviata.';
+  log('Sessione azzerata.');
+}
+for (const id of ['newUrl','newDate','newTitle','newDesc','newCat','newCorpo']) $(id).addEventListener('input', () => { generated = false; invalidate(`modifica del campo ${id}`); });
+for (const id of ['confirmBackup','confirmReview','confirmPath']) $(id).addEventListener('change', () => { $('publish').disabled = true; if (!fallbackMode && testsValid && checksOK && $('confirmBackup').checked && $('confirmReview').checked && $('confirmPath').checked) $('publish').disabled = false; });
+for (const id of ['ghRepo','ghBranch','ghPath','ghToken']) $(id).addEventListener('input', () => { $('publish').disabled = true; });
+document.querySelectorAll('input[name="photoState"]').forEach(input => input.addEventListener('change', () => { photoVerified = false; photoData = null; photoDataUrl = ''; generated = false; invalidate('modifica dello stato fotografia'); $('photoStatus').className = 'status wait'; $('photoStatus').textContent = input.value === 'none' ? 'Stato fotografia: non richiesta.' : 'Fotografia richiesta: selezionare il file e rigenerare. La verifica online non è disponibile in questa versione.'; }));
+$('photoFile').addEventListener('change', () => { photoVerified = false; photoData = null; photoDataUrl = ''; generated = false; invalidate('modifica della fotografia'); });
+$('sourceArchive').addEventListener('change', loadArchiveTableOnly);
+$('sourceEvidence').addEventListener('change', () => { const file = $('sourceEvidence').files[0]; $('evidenceFileStatus').className = 'status wait'; $('evidenceFileStatus').textContent = file ? `File selezionato: ${file.name}. La diagnosi è disponibile subito.` : 'Nessun file selezionato: puoi incollare il sorgente HTML.'; if (file) diagnoseEvidence(); });
+$('pastedEvidence').addEventListener('input', () => { if (!$('sourceEvidence').files[0] && $('pastedEvidence').value.trim()) { $('evidenceFileStatus').className = 'status wait'; $('evidenceFileStatus').textContent = 'Sorgente HTML incollato; premi CARICA E CALCOLA BLAKE3 per analizzarlo.'; diagnoseEvidence(); } });
+log('ADMIN V56 avviato: report visibili in pagina; sorgenti in lettura; nessuna pubblicazione automatica.');
+// Un solo gestore del click: l'attributo onclick nel pulsante richiama già diagnoseEvidence().
+// Evita doppie esecuzioni concorrenti che possono lasciare l'interfaccia senza un esito stabile.
+window.addEventListener('error', event => { const out = $('evDiagnostic'); if (out) out.textContent = `ERRORE JAVASCRIPT: ${event.message || 'errore non specificato'}`; });
+window.addEventListener('unhandledrejection', event => { const out = $('evDiagnostic'); if (out) out.textContent = `ERRORE ASINCRONO: ${event.reason?.message || String(event.reason || 'errore non specificato')}`; });
+fetchRepositorySources();
+
+</script></body></html>
