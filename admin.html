@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>admin</title><style>body{font:15px Arial,sans-serif;background:#101827;color:#eaf1f9;max-width:1100px;margin:24px auto;padding:0 14px}h1{color:#f5d77a}section{background:#1c2a40;padding:16px;margin:12px 0;border-radius:9px}label{display:block;margin:10px 0 4px}input,select,textarea,button{font:inherit;padding:9px;border-radius:5px;border:1px solid #8898aa}input,select,textarea{background:white;color:#182234;box-sizing:border-box;width:100%}button{background:#f3d77a;color:#172237;cursor:pointer;margin:6px 5px 6px 0}button:disabled{opacity:.4}.board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.panel{background:#0a0a0a;border:2px solid #eac95e;border-radius:6px;padding:10px;min-width:0}.label{background:#eac95e;color:#111;padding:8px;font-weight:bold;margin:-10px -10px 10px}.card{max-height:300px;overflow:auto;overflow-wrap:anywhere}.card img{max-width:100%;height:auto}.card a{color:#b1d7ff}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#101827;padding:10px}iframe{width:100%;height:350px;background:white;border:0}@media(max-width:650px){.board{grid-template-columns:1fr}}.report{padding:12px;background:#0b2434;border:1px solid #51748c;border-radius:7px;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}.diag{background:#0b2434;border-top:1px solid #7287a4;padding:8px;margin-top:8px;white-space:pre-wrap;font-size:12px}.panel .card{max-height:380px}.panel .card img{max-height:190px;object-fit:contain}details{margin:10px 0}summary{cursor:pointer;color:#f5d77a}.state{font-size:12px;color:#dce8f5;padding:6px 0}.preview-board{grid-template-columns:minmax(0,1fr)}.preview-board iframe{display:block;width:100%;height:780px;box-sizing:border-box}.preview-board .panel{min-width:0}</style></head><body><h1>admin</h1><p>Riceve esclusivamente pacchetti riconosciuti, confronta il risultato con quello preparato dall'ESTERNA e restituisce i due HTML. Nessuna pubblicazione GitHub.</p><section id="offlineTest"><h2>TEST OFFLINE — ROTAZIONE REALE</h2><p>Carica i due originali. Compila il quinto articolo, premi GENERA EVIDENZE IN MEMORIA e confronta le pagine PRIMA e DOPO. Nessuna chiave necessaria. ARCHIVIO sempre intatto.</p>
+<label>evidenze.html originale</label><input type="file" id="offEv" accept=".html,text/html">
+<label>archivio.html originale (sola lettura)</label><input type="file" id="offAr" accept=".html,text/html">
+<label>URL articolo (anche già presente in ARCHIVIO)</label><input id="offUrl" type="url" placeholder="https://www.nordestnews.it/...">
+<label>Data</label><input id="offDate" type="date">
+<label>Titolo</label><input id="offTitle" type="text">
+<label>Descrizione</label><textarea id="offDesc" rows="3"></textarea>
+<label>Categoria</label><input id="offCat" value="TEATRO">
+<label>Fotografia (facoltativa, incorporata nell'HTML)</label><input id="offPhoto" type="file" accept="image/*">
+<div><button type="button" id="offGenerate">GENERA EVIDENZE IN MEMORIA</button><button type="button" id="offCancel">ANNULLA ROAD MAP</button><button type="button" id="offDownload" disabled>SCARICA EVIDENZE.HTML GENERATA</button></div>
+<pre id="offStatus" aria-live="polite">In attesa. Nessun file modificato.</pre>
+<div class="board preview-board"><div class="panel"><div class="label">PRIMA — ORIGINALE</div><iframe title="Anteprima prima" id="offBefore" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe></div><div class="panel"><div class="label">DOPO — ROTAZIONE</div><iframe title="Anteprima dopo" id="offAfter" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe></div></div>
+</section><section><h2>1. Riconoscimento e pacchetto</h2><p><strong>REGOLA:</strong> INDEX N = OBJECT integrale (A + B + C + ... + Z). Trasferimento indivisibile; componenti sconosciuti inclusi. Se il formato non è trasferibile, NULL e diagnostica: nessuna ricostruzione.</p><label>Chiave concordata</label><input id="key" type="password"/><label>Pacchetto completo ESTERNA</label><input accept=".json" id="packet" type="file"/><button id="execute">1 — GENERA PREVIEW SENZA MODIFICARE</button><label>Autorizzazione restituita dall’ESTERNA</label><input accept=".json" id="approval" type="file"/><button disabled="" id="commit">2 — APPLICA SOLO DOPO APPROVAZIONE</button><pre id="status">In attesa. Nessuna operazione autonoma.</pre></section><section><h2>2. INPUT — originali e dati ricevuti dall’ESTERNA</h2>
+<div id="sources" class="report">EVIDENZE: non ricevuto | ARCHIVIO: non ricevuto | ROADMAP: non ricevuta</div>
+<div class="board" id="inputBoard"></div>
+<details><summary>Dettagli INPUT: file, operazioni e problemi</summary><pre id="inputDetail">In attesa del pacchetto.</pre></details>
+</section>
+<section><h2>3. OUTPUT — anteprima calcolata dall’INTERNA</h2>
+<div class="report" id="outputState">NESSUN OUTPUT: in attesa della verifica.</div>
+<div class="board" id="board"></div>
+<details open><summary>Esito, spostamenti e diagnostica</summary><pre id="summary">Nessun risultato.</pre></details>
+<button id="export" disabled>ESPORTA RISPOSTA ALL'ESTERNA</button>
+<button id="downloadEv" disabled>SCARICA EVIDENZE</button>
+<button id="downloadAr" disabled>SCARICA ARCHIVIO</button>
+</section><script>
+const $=id=>document.getElementById(id);
+const parse=s=>new DOMParser().parseFromString(s,'text/html');
+const cards=d=>Array.from(d.querySelectorAll('a.card-link'));
+const entries=d=>Array.from(d.querySelectorAll('[id^="reale-n"]')).filter(x=>/^reale-n\d+$/.test(x.id));
+const url=x=>(x?.getAttribute('href')||x?.querySelector('a[href]')?.getAttribute('href')||'').trim().replace(/\/$/,'');
+const clone=x=>x.cloneNode(true);
+const serialize=d=>'<!DOCTYPE html>\n'+d.documentElement.outerHTML;
+const hash=async s=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(v=>v.toString(16).padStart(2,'0')).join('')};
+function save(name,s,mime='application/json'){const a=document.createElement('a'),u=URL.createObjectURL(new Blob([s],{type:mime}));a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+function requireOk(cond,msg){if(!cond)throw Error(msg)}
+function readObject(html){const d=parse(html);const n=cards(d)[0];requireOk(n&&cards(d).length===1,'OBJECT deve contenere esattamente una scheda a.card-link');requireOk(url(n),'OBJECT senza URL');return n}
+function check(ev,ar){const es=cards(ev),as=entries(ar);requireOk(es.length===4,'EVIDENZE: trovate '+es.length+' schede, attese quattro');requireOk(as.length>0,'ARCHIVIO senza INDEX');as.forEach((x,i)=>requireOk(x.id==='reale-n'+(i+1),'INDEX non consecutivo: '+x.id));requireOk(new Set(es.map(url)).size===4&&es.every(url),'LABEL duplicate o senza URL');return {es,as}}
+function findArchive(as,u){return as.findIndex(x=>url(x)===u)}
+function storeObject(item,object){let t=item.querySelector('template[data-fk-object]');if(!t){t=item.ownerDocument.createElement('template');t.setAttribute('data-fk-object','');item.appendChild(t)}t.innerHTML=object.outerHTML}
+function archiveObject(item){
+ const t=item.querySelector('template[data-fk-object]');
+ if(t)return readObject(t.innerHTML);
+ const embedded=cards(item);
+ if(embedded.length===1)return embedded[0];
+ return null;
+}
+function fingerprint(x){return x.outerHTML}
+function archiveInventory(ar){return entries(ar).map((x,i)=>({index:i+1,html:fingerprint(x),url:url(x),parts:x.querySelectorAll('*').length}));}
+function ensureArchivePreserved(before,after,ops){
+ const inserted=false;
+ const a=archiveInventory(after);
+ const offset=0;
+ requireOk(a.length===before.length+offset,'ARCHIVIO: numero INDEX alterato');
+ for(let i=0;i<before.length;i++){
+  const original=before[i],current=a[i+offset];
+  requireOk(original.url===current.url,'INDEX '+(i+1)+': URL originale alterato');
+  // L'HTML puo cambiare soltanto per operazioni di modifica esplicite.
+  const altered=ops.some(o=>['REPLACE_FIELD','SET_PHOTO','ATTACH_PDF'].includes(o.type)&&o.params?.label);
+  if(!altered)requireOk(original.html===current.html,'INDEX '+(i+1)+': OBJECT ARCHIVIO alterato');
+ }
+ return a;
+}
+function renderCards(ev,arr){
+ const old=cards(ev);requireOk(old.length===4&&arr.length===4,'Quattro LABEL obbligatorie');
+ for(let i=0;i<4;i++){
+  // Conserva l'OBJECT integrale: sposta il nodo, non ricostruisce il suo contenuto.
+  const node=ev.importNode(arr[i],true);
+  const card=node.querySelector('.card');requireOk(card,'OBJECT senza contenitore .card');
+  card.classList.toggle('n1',i===0); // Il CSS originale applica .card.n1, NON a.card-link.n1
+  card.id='evidenza-'+(i+1);
+  const badge=card.querySelector('.pos-label');
+  if(badge)badge.textContent='POS'+(i+1);
+  node.setAttribute('data-fk-label','ABCD'[i]);
+  old[i].replaceWith(node);
+ }
+}
+function reindex(ar){entries(ar).forEach((x,i)=>{x.id='reale-n'+(i+1);const num=x.querySelector('.num');if(num)num.textContent=String(i+1)})}
+function newEntry(ar,card,date,title){const first=entries(ar)[0];requireOk(first,'ARCHIVIO vuoto');const el=ar.createElement('div');el.className=first.className||'item';el.id='reale-n0';const num=ar.createElement('span');num.className='num';num.textContent='0';const dt=ar.createElement('span');dt.className='date';dt.textContent=date||'';const link=ar.createElement('a');link.href=url(card);link.target='_blank';const strong=ar.createElement('strong');strong.textContent=title||card.querySelector('h2,h3,.title,.card-title')?.textContent?.trim()||'ARTICOLO';link.append(strong);el.append(num,dt,link);storeObject(el,card);first.before(el);reindex(ar)}
+// REGOLA OBJECT: l'intero sottoalbero HTML e i suoi componenti sconosciuti
+// viaggiano insieme. Sono consentite soltanto modifiche di posizione visuale.
+function payloadSignature(node){
+ const c=node.cloneNode(true);
+ c.removeAttribute('data-fk-label');
+ c.classList.remove('n1');
+ c.querySelectorAll('.pos-label').forEach(x=>x.textContent='__POS__');
+ return c.outerHTML;
+}
+function verifyTransport(before,after,command){
+ const input=cards(before).map(x=>({href:url(x),signature:payloadSignature(x)}));
+ const output=cards(after).map(x=>({href:url(x),signature:payloadSignature(x)}));
+ for(const item of input){
+  const match=output.find(x=>x.href===item.href);
+  if(match)requireOk(match.signature===item.signature,'OBJECT ALTERATO: '+command+' URL '+item.href+' — componente originale modificata');
+ }
+ return {input,output};
+}
+function opApply(ev,ar,op){const {es,as}=check(ev,ar),p=op.params||{},type=op.type;const label='ABCD'.indexOf(p.label);
+ if(type==='VALIDATE_ONLY')return 'Controllo senza modifiche';
+ if(type==='MOVE_LABEL'){const from='ABCD'.indexOf(p.from),to='ABCD'.indexOf(p.to);requireOk(from>=0&&to>=0,'LABEL origine/destinazione non valide');const next=es.map(clone);const [moving]=next.splice(from,1);next.splice(to,0,moving);renderCards(ev,next);return `LABEL ${p.from} → ${p.to}`}
+ if(type==='RECALL_INDEX'){
+  const n=Number(p.index);
+  requireOk(Number.isSafeInteger(n)&&n>=1&&n<=as.length,'INDEX inesistente');
+  const u=url(as[n-1]);
+  requireOk(label>=0,'LABEL non valida');
+  const existing=es.find(x=>url(x)===u);
+  const supplied=p.objectHtml?readObject(p.objectHtml):null;
+  requireOk(!supplied||url(supplied)===u,'URL della scheda diverso dall’INDEX selezionato');
+  requireOk(existing||supplied,'Preparare la scheda nell’ADMIN ESTERNA: titolo, testo e foto. L’ARCHIVIO contiene soltanto l’URL.');
+  const source=supplied||existing;
+  const current=es.findIndex(x=>url(x)===u);
+  const next=es.map(clone);
+  if(current>=0)next.splice(current,1);
+  next.splice(label,0,clone(source));next.length=4;
+  renderCards(ev,next);
+  return `INDEX ${n} richiamato in POS${label+1}; archivio invariato`;
+ }
+ if(type==='INSERT_NEW_OBJECT'){
+  const obj=readObject(p.objectHtml||'');
+  const current=es.findIndex(x=>url(x)===url(obj));
+  const next=es.map(clone);
+  if(current>=0)next.splice(current,1);
+  next.unshift(obj);next.length=4;
+  renderCards(ev,next);
+  return `Articolo inserito in POS1; vecchia POS4 esclusa; archivio invariato`;
+ }
+ requireOk(label>=0,'LABEL non valida');const card=es[label],entry=as.find(x=>url(x)===url(card));requireOk(entry,'LABEL non collegata a un INDEX archivio');
+ if(type==='SET_PHOTO'){requireOk(/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(p.photoData||''),'Fotografia non valida');const img=card.querySelector('img');if(img)img.src=p.photoData;else{const photo=card.ownerDocument.createElement('img');photo.src=p.photoData;card.appendChild(photo)}}
+ else if(type==='REPLACE_FIELD'){const sel={title:'h2,h3,.title,.card-title',description:'.desc,.description,.card-description'};if(p.field==='url'){requireOk(/^https?:\/\//.test(p.value||''),'URL non valido');requireOk(findArchive(as,p.value)<0,'URL già esistente');card.setAttribute('href',p.value);const link=entry.querySelector('a[href]');requireOk(link,'Voce ARCHIVIO senza link');link.href=p.value}else{requireOk(sel[p.field],'Campo non supportato');const field=card.querySelector(sel[p.field]);requireOk(field,'Campo inesistente nell’OBJECT');field.textContent=String(p.value??'');if(p.field==='title'){const strong=entry.querySelector('a[href] strong');if(strong)strong.textContent=String(p.value??'')}}}
+ else if(type==='ATTACH_PDF'){requireOk(/^data:application\/pdf;base64,[A-Za-z0-9+/=]+$/.test(p.pdfData||''),'PDF non valido');const link=card.querySelector('a[data-fk-pdf]');if(link){link.href=p.pdfData;link.download=p.fileName||'documento.pdf'}else{const pdf=card.ownerDocument.createElement('a');pdf.setAttribute('data-fk-pdf','');pdf.href=p.pdfData;pdf.download=p.fileName||'documento.pdf';pdf.textContent='PDF';card.appendChild(pdf)}}
+ else throw Error('Comando sconosciuto: '+type);
+ storeObject(entry,card);return `${type} LABEL ${p.label}`
+}
+function run(srcEv,srcAr,operations){
+ const ev=parse(srcEv),ar=parse(srcAr),logs=[];check(ev,ar);
+ const originalArchive=archiveInventory(ar);
+ for(const op of operations){
+  const beforeEv=parse(serialize(ev));
+  const detail=opApply(ev,ar,op);
+  check(ev,ar);
+  if(['MOVE_LABEL','RECALL_INDEX','INSERT_NEW_OBJECT','VALIDATE_ONLY'].includes(op.type))verifyTransport(beforeEv,ev,op.type);
+  logs.push({id:op.id,type:op.type,detail});
+ }
+ const audit=ensureArchivePreserved(originalArchive,ar,operations);
+ return {evidenzeHtml:serialize(ev),archivioHtml:serialize(ar),objects:cards(ev).map((n,i)=>({label:'ABCD'[i],html:n.outerHTML,index:entries(ar).findIndex(a=>url(a)===url(n))+1})),logs,audit:{originalIndexCount:originalArchive.length,outputIndexCount:audit.length,rule:'INDEX = OBJECT indivisibile; confronto completo del sottoalbero HTML per ogni OBJECT conservato; componenti sconosciuti non scartati'}}
+}
+function draw(objects){const b=$('board');b.replaceChildren();for(const o of objects){const box=document.createElement('div');box.className='panel';const h=document.createElement('div');h.className='label';h.textContent='LABEL '+o.label+' — INDEX '+(o.index||'?');const c=document.createElement('div');c.className='preview-object';const n=readObject(o.html);c.appendChild(document.importNode(n,true));box.append(h,c);b.append(box)}}
+
+
+function displayBoard(id,objects,logs=[],errors={}){const b=$(id);b.replaceChildren();for(const letter of 'ABCD'){
+ const o=(objects||[]).find(x=>x.label===letter),box=document.createElement('div');box.className='panel';const h=document.createElement('div');h.className='label';h.textContent='LABEL '+letter+' — INDEX '+(o?.index||'—');box.append(h);
+ if(o?.html){try{const c=document.createElement('div');c.className='preview-object';c.appendChild(document.importNode(readObject(o.html),true));box.append(c)}catch(e){const x=document.createElement('div');x.textContent='OBJECT non leggibile: '+e.message;box.append(x)}}else{const x=document.createElement('div');x.textContent='Nessun OBJECT ricevuto';box.append(x)}
+ const diag=document.createElement('div');diag.className='diag';const moves=(logs||[]).filter(x=>{const v=JSON.stringify(x);return v.includes('LABEL '+letter)||v.includes('→ '+letter)||v.includes('LABEL '+letter+' ')}).map(x=>x.detail||x.type);
+ const err=(errors[letter]||[]);diag.textContent='URL: '+(o?.html?url(readObject(o.html)):'—')+'\nMOVIMENTI: '+(moves.join(' | ')||'nessuno')+'\nERRORI: '+(err.join(' | ')||'nessuno segnalato');box.append(diag);b.append(box)}}
+function clearOutput(){ $('board').replaceChildren();$('outputState').textContent='NESSUN OUTPUT: nessuna preview ricevuta o elaborata.';}
+function showIncoming(q){const ev=q?.source?.evidenzeHtml,ar=q?.source?.archivioHtml,ops=q?.operations||[];const notes=[];let objs=[];let count='non leggibile';
+ try{if(typeof ev==='string'){const d=parse(ev);objs=cards(d).map((n,i)=>({label:'ABCD'[i]||'?',html:n.outerHTML,index:typeof ar==='string'?entries(parse(ar)).findIndex(x=>url(x)===url(n))+1:0}));notes.push('EVIDENZE ricevuto: '+cards(d).length+' schede')}else notes.push('EVIDENZE ASSENTE');}catch(e){notes.push('EVIDENZE ERRORE: '+e.message)}
+ try{if(typeof ar==='string'){count=entries(parse(ar)).length;notes.push('ARCHIVIO ricevuto: '+count+' INDEX')}else notes.push('ARCHIVIO ASSENTE')}catch(e){notes.push('ARCHIVIO ERRORE: '+e.message)}
+ notes.push('ROADMAP: '+ops.length+' istruzioni');$('sources').textContent=notes.join(' | ');$('inputDetail').textContent=JSON.stringify({ricezione:notes,operazioni:ops,impronte:q?.sourceDigests,risultatoAtteso:q?.expectedDigests},null,2);displayBoard('inputBoard',objs);
+}
+let reply=null;let pending=null;
+$('execute').onclick=async()=>{reply=null;pending=null;$('commit').disabled=true;$('export').disabled=$('downloadEv').disabled=$('downloadAr').disabled=true;$('board').replaceChildren();$('inputBoard').replaceChildren();$('sources').textContent='Pacchetto non ancora letto';clearOutput();let id='sconosciuto';try{
+ requireOk($('packet').files[0],'Nessun pacchetto');const q=JSON.parse(await $('packet').files[0].text());id=q.requestId;showIncoming(q);
+ requireOk(q.protocolVersion===3&&typeof id==='string'&&Array.isArray(q.operations)&&q.operations.length,'Protocollo o roadmap non validi');
+ requireOk($('key').value.length>=8&&await hash($('key').value)===q.sessionKeyDigest,'ESTERNA NON RICONOSCIUTA');
+ requireOk(typeof q.source?.evidenzeHtml==='string'&&typeof q.source?.archivioHtml==='string','Originali assenti');
+ requireOk(await hash(q.source.evidenzeHtml)===q.sourceDigests?.evidenze&&await hash(q.source.archivioHtml)===q.sourceDigests?.archivio,'MISMATCH originali');
+ requireOk(q.expected&&Array.isArray(q.expected.objects)&&q.expected.objects.length===4,'Anteprime OBJECT non ricevute dall’ESTERNA');
+ requireOk(await hash(q.expected.evidenzeHtml)===q.expectedDigests?.evidenze&&await hash(q.expected.archivioHtml)===q.expectedDigests?.archivio,'MISMATCH risultato preparato');
+ const outcome=run(q.source.evidenzeHtml,q.source.archivioHtml,q.operations);
+ requireOk(outcome.evidenzeHtml===q.expected.evidenzeHtml&&outcome.archivioHtml===q.expected.archivioHtml,'MISMATCH: anteprima ESTERNA e risultato INTERNA differenti; nessun file modificato');
+ for(let j=0;j<4;j++)requireOk(outcome.objects[j].html===q.expected.objects[j].html&&outcome.objects[j].label===q.expected.objects[j].label,'OBJECT LABEL '+('ABCD'[j])+' diverso');
+ const previewDigest=await hash(id+'|'+q.expectedDigests.evidenze+'|'+q.expectedDigests.archivio);
+ pending={q,outcome,previewDigest};reply={protocolVersion:3,requestId:id,status:'PREVIEW',diagnostics:['Chiave riconosciuta','Originali verificati','OBJECT esistenti confrontati integralmente dopo gli spostamenti','Sequenza eseguita soltanto in memoria','Nessun file pubblicato o salvato'],logs:outcome.logs,archiveAudit:outcome.audit,objectTrace:outcome.objects.map(o=>({label:o.label,index:o.index,url:url(readObject(o.html)),bytes:o.html.length})),previewDigest,previewDigests:q.expectedDigests,preview:{evidenzeHtml:outcome.evidenzeHtml,archivioHtml:outcome.archivioHtml,objects:outcome.objects}};
+ displayBoard('board',outcome.objects,outcome.logs);$('outputState').textContent='PREVIEW CALCOLATA IN MEMORIA — non approvata, nessun file modificato';$('summary').textContent=JSON.stringify({stato:'PREVIEW, NON ESEGUITO',logs:outcome.logs,archiveAudit:outcome.audit,impronte:q.expectedDigests},null,2);
+ $('status').textContent='PREVIEW pronta: esportala all’ESTERNA e attendi approvazione.';$('export').disabled=false;$('commit').disabled=false;
+ }catch(e){reply={protocolVersion:3,requestId:id,status:'ERROR',diagnostics:[e.message],logs:[]};clearOutput();$('summary').textContent='NULL: nessuna operazione — '+e.message;$('status').textContent='BLOCCATO: '+e.message;$('export').disabled=false}};
+$('commit').onclick=async()=>{try{
+ requireOk(pending,'Nessuna preview verificata');requireOk($('approval').files[0],'Autorizzazione assente');const a=JSON.parse(await $('approval').files[0].text());const {q,outcome,previewDigest}=pending;
+ requireOk(a.protocolVersion===3&&a.type==='APPROVAL'&&a.approved===true&&a.requestId===q.requestId,'Autorizzazione non valida');
+ requireOk(a.previewDigest===previewDigest&&a.sessionKeyDigest===q.sessionKeyDigest&&a.sourceDigests.evidenze===q.sourceDigests.evidenze&&a.sourceDigests.archivio===q.sourceDigests.archivio,'MISMATCH approvazione');
+ requireOk(await hash($('key').value)===q.sessionKeyDigest,'Chiave non riconosciuta');
+ const fresh=run(q.source.evidenzeHtml,q.source.archivioHtml,q.operations);
+ requireOk(fresh.evidenzeHtml===outcome.evidenzeHtml&&fresh.archivioHtml===outcome.archivioHtml,'Risultato cambiato dalla preview');
+ reply={protocolVersion:3,requestId:q.requestId,status:'COMMITTED',approvalDigest:previewDigest,diagnostics:['Autorizzazione verificata','Risultato identico alla preview','HTML pronti per scaricamento; nessuna pubblicazione GitHub'],logs:fresh.logs,resultDigests:q.expectedDigests,result:{evidenzeHtml:fresh.evidenzeHtml,archivioHtml:fresh.archivioHtml}};
+ $('outputState').textContent='APPROVATO — risultati pronti per scaricamento, nessuna pubblicazione GitHub';$('status').textContent='APPROVATO: file risultanti pronti, non pubblicati';$('summary').textContent=JSON.stringify({stato:'APPROVATO',logs:fresh.logs,impronte:q.expectedDigests},null,2);$('export').disabled=false;$('downloadEv').disabled=$('downloadAr').disabled=false;$('commit').disabled=true;
+ }catch(e){$('outputState').textContent='APPROVAZIONE RIFIUTATA: '+e.message;$('status').textContent='NULL: '+e.message;$('downloadEv').disabled=$('downloadAr').disabled=true}};
+$('export').onclick=()=>{if(reply)save('FORT_KNOX_V94_RISPOSTA_'+reply.requestId+'.json',JSON.stringify(reply),'application/json')};
+$('downloadEv').onclick=()=>{if(reply?.status==='COMMITTED')save('evidenze_V94_INTERNA.html',reply.result.evidenzeHtml,'text/html')};
+$('downloadAr').onclick=()=>{if(reply?.status==='COMMITTED')save('archivio_V95_INTERNA.html',reply.result.archivioHtml,'text/html')};
+
+// Test offline autonomo: non modifica l'ARCHIVIO e non richiede chiavi.
+let offGenerated=null;
+function offReset(clearInputs=false){offGenerated=null;$('offDownload').disabled=true;$('offAfter').removeAttribute('srcdoc');$('offBefore').removeAttribute('srcdoc');$('offStatus').textContent='ROAD MAP ANNULLATA. Nessun risultato salvato o pubblicato.';if(clearInputs){for(const id of ['offEv','offAr','offPhoto'])$(id).value='';for(const id of ['offUrl','offDate','offTitle','offDesc'])$(id).value='';}}
+$('offCancel').onclick=()=>offReset(false);
+function offSetText(parent,selector,value){const n=parent.querySelector(selector);if(n)n.textContent=value;}
+function offPreview(frame,html){frame.srcdoc=html.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi,'');}
+$('offGenerate').onclick=async()=>{offGenerated=null;$('offDownload').disabled=true;$('offStatus').textContent='Verifica in corso…';try{
+ const evFile=$('offEv').files[0],arFile=$('offAr').files[0];requireOk(evFile&&arFile,'Carica entrambi gli originali evidenze.html e archivio.html');
+ const evHtml=await evFile.text(),arHtml=await arFile.text();const ev=parse(evHtml),ar=parse(arHtml);const {es,as}=check(ev,ar);
+ const link=$('offUrl').value.trim(),title=$('offTitle').value.trim(),date=$('offDate').value,desc=$('offDesc').value.trim(),cat=$('offCat').value.trim();
+ requireOk(/^https?:\/\/[^\s]+$/i.test(link),'Inserisci un URL http/https valido');requireOk(title&&date,'Titolo e data obbligatori');
+ const source=es[0];const node=source.cloneNode(true);node.href=link;node.setAttribute('target','_blank');
+ offSetText(node,'.date',date.split('-').reverse().join('/'));offSetText(node,'h2',title);offSetText(node,'.badge-top',cat||'ARTICOLO');
+ const description=node.querySelector('.description,.desc,[data-description]');if(description)description.textContent=desc;else if(desc){const d=ev.createElement('p');d.className='description';d.textContent=desc;node.querySelector('.card')?.appendChild(d)}
+ node.querySelectorAll('img').forEach(n=>n.remove());
+ const photo=$('offPhoto').files[0];if(photo){requireOk(photo.type.startsWith('image/'),'Fotografia non valida');const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Impossibile leggere la fotografia'));reader.readAsDataURL(photo)});const img=ev.createElement('img');img.className='card-photo';img.src=data;img.alt=title;const heading=node.querySelector('h2');if(heading)heading.after(img);else node.querySelector('.card')?.append(img)}
+ const old=es.map(x=>x.cloneNode(true));const current=old.findIndex(x=>url(x)===url(node));if(current>=0)old.splice(current,1);
+ const dropped=old.length===4?url(old[3]):'(articolo già in evidenza)';const rotated=[node,...old].slice(0,4);renderCards(ev,rotated);
+ // Conserva tutte le parti degli OBJECT salvo le etichette di posizione necessarie.
+ // Solo geometria e hover: conserva tutti gli OBJECT e i colori originali.
+ const style=ev.createElement('style');style.setAttribute('data-fk-layout','');
+ style.textContent=`.grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px;align-items:stretch}.grid>a.card-link{display:block;position:relative;min-width:0;height:100%;box-sizing:border-box;cursor:pointer;pointer-events:auto;z-index:1}.grid>a.card-link>.card{box-sizing:border-box;width:100%;height:100%;min-height:280px;min-width:0;background:#1a1a1a;border-color:#E10600;display:flex;flex-direction:column}.grid>a.card-link>.card .pos-label{min-height:13px;box-sizing:border-box}.grid>a.card-link:focus-visible{outline:2px solid #FFD700;outline-offset:2px}.grid>a.card-link:first-child>.card{background:#1f1f1f}.grid>a.card-link:hover>.card,.grid>a.card-link:focus-visible>.card{animation:fk-border-pulse .75s steps(2,end) infinite;border-color:#FFD700}@keyframes fk-border-pulse{0%,100%{border-color:#FFD700}50%{border-color:#E10600}}@media(max-width:768px){.grid{grid-template-columns:minmax(0,1fr)}}`;
+ // Allinea le quattro schede e i due collegamenti inferiori nel file EVIDENZE scaricato.
+ style.textContent += `.wrap{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;column-gap:16px!important;align-items:stretch!important}.wrap>.grid{grid-column:1/-1!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-rows:1fr!important;gap:16px!important;align-items:stretch!important}.wrap>.grid>a.card-link{display:flex!important;min-width:0!important;min-height:0!important;height:100%!important;align-self:stretch!important}.wrap>.grid>a.card-link>.card{box-sizing:border-box!important;width:100%!important;min-height:322px!important;height:100%!important;flex:1!important;padding:20px 18px!important}.wrap>.riga-centro{display:flex!important;width:100%!important;min-width:0!important;margin-top:22px!important;justify-content:center!important;align-items:stretch!important;box-sizing:border-box!important}.wrap>.riga-centro>.card-lungo-chiaro{box-sizing:border-box!important;width:100%!important;max-width:420px!important;min-height:74px!important;display:flex!important;align-items:center!important;justify-content:center!important}@media(max-width:768px){.wrap{grid-template-columns:1fr!important}.wrap>.grid{grid-template-columns:1fr!important}.wrap>.riga-centro{grid-column:1/-1!important;margin-top:12px!important}}`;
+ ev.head.querySelector('style[data-fk-layout]')?.remove();ev.head.appendChild(style);
+ // I quattro OBJECT rimangono veri link esterni anche nel file scaricato.
+ for(const anchor of cards(ev)){const dest=anchor.getAttribute('href');requireOk(/^https?:\/\//i.test(dest||''),'URL esterno mancante nel risultato');anchor.setAttribute('target','_blank');anchor.setAttribute('rel','noopener noreferrer');}
+ const after=serialize(ev);requireOk(cards(parse(after)).length===4,'Rotazione non valida');
+ requireOk(entries(parse(arHtml)).length===as.length,'ARCHIVIO alterato');
+ const beforeUrls=es.map(url),afterUrls=cards(parse(after)).map(url);requireOk(afterUrls[0]===link.replace(/\/$/,''),'POS1 non aggiornata');requireOk(JSON.stringify(beforeUrls)!==JSON.stringify(afterUrls),'Le anteprime sono rimaste identiche');
+ offPreview($('offBefore'),evHtml);offPreview($('offAfter'),after);offGenerated=after;$('offDownload').disabled=false;
+ const archiveMatch=as.findIndex(x=>url(x)===url(node));$('offStatus').textContent='ROTAZIONE OK IN MEMORIA: nuova POS1 = '+link+'\nPOS2 = '+afterUrls[1]+'\nPOS3 = '+afterUrls[2]+'\nPOS4 = '+afterUrls[3]+'\nUSCITA = '+dropped+'\nARCHIVIO INVARIATO ('+as.length+' INDEX). '+(archiveMatch>=0?'URL già presente: INDEX '+(archiveMatch+1)+', nessun duplicato.':'URL non presente: nessuna modifica automatica all’ARCHIVIO.')+'\nNessuna pubblicazione.';
+ }catch(e){offGenerated=null;$('offDownload').disabled=true;$('offAfter').removeAttribute('srcdoc');$('offStatus').textContent='TEST BLOCCATO: '+e.message;}};
+$('offDownload').onclick=()=>{if(offGenerated)save('evidenze_V104_ROTATE_OFFLINE.html',offGenerated,'text/html')};
+</script><section id="fkGithub"><h2>GitHub — admin</h2><p>Repository: edgridellied-ship-it / edoardo-gridelli · branch main. Il token resta nel campo, non viene inserito nel file esportato.</p><label>Token GitHub</label><input type="password" id="fkToken" autocomplete="off" placeholder="github_pat_..."><button type="button" id="fkRead">CARICA EVIDENZE E ARCHIVIO DA GITHUB</button><button type="button" id="fkPublish" disabled>PUBBLICA EVIDENZE GENERATE SU GITHUB</button><pre id="fkState">Nessuna operazione GitHub eseguita.</pre></section><script>
+/* Collegamento GitHub aggiuntivo. Logica originale di rotazione non modificata. */
+(()=>{
+'use strict';
+const owner='edgridellied-ship-it',repo='edoardo-gridelli',branch='main';
+const get=id=>document.getElementById(id);
+let loadedSha=null;
+const say=s=>{get('fkState').textContent=s};
+const token=()=>{const t=get('fkToken').value.trim();if(!t)throw Error('Inserisci il token GitHub');return t};
+async function request(name,opts={}){
+ const res=await fetch('https://api.github.com/repos/'+owner+'/'+repo+'/contents/'+name,{...opts,headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token(),'X-GitHub-Api-Version':'2022-11-28',...(opts.headers||{})},cache:'no-store'});
+ if(!res.ok)throw Error('GitHub HTTP '+res.status+': '+(await res.text()).slice(0,200));return res.json();
+}
+const decode=content=>new TextDecoder().decode(Uint8Array.from(atob(content.replace(/\s/g,'')),c=>c.charCodeAt(0)));
+const encode=s=>{const bytes=new TextEncoder().encode(s);let b='';for(let i=0;i<bytes.length;i+=8192)b+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(b)};
+function setInput(id,name,content){const f=new File([content],name,{type:'text/html'}),dt=new DataTransfer();dt.items.add(f);get(id).files=dt.files}
+get('fkRead').addEventListener('click',async()=>{try{
+ say('Caricamento da GitHub...');const [ev,ar]=await Promise.all([request('evidenze.html?ref='+branch),request('archivio.html?ref='+branch)]);
+ const e=decode(ev.content),a=decode(ar.content);
+ if(new DOMParser().parseFromString(e,'text/html').querySelectorAll('a.card-link').length!==4)throw Error('Evidenze non riconosciute: attese 4 schede');
+ if(!new DOMParser().parseFromString(a,'text/html').querySelector('[id^="reale-n"]'))throw Error('Archivio non riconosciuto');
+ setInput('offEv','evidenze.html',e);setInput('offAr','archivio.html',a);loadedSha=ev.sha;get('fkPublish').disabled=true;
+ say('Originali caricati da GitHub nei due campi offline. Compila l’articolo e premi GENERA EVIDENZE IN MEMORIA. Nessuna pubblicazione.');
+ }catch(e){loadedSha=null;get('fkPublish').disabled=true;say('ERRORE: '+e.message)}});
+get('offGenerate').addEventListener('click',()=>{get('fkPublish').disabled=!(loadedSha&&get('offDownload').disabled===false)});
+get('offCancel').addEventListener('click',()=>{get('fkPublish').disabled=true});
+for(const id of ['offEv','offAr'])get(id).addEventListener('change',()=>{loadedSha=null;get('fkPublish').disabled=true});
+get('fkPublish').addEventListener('click',async()=>{try{
+ if(!loadedSha||!offGenerated||get('offDownload').disabled)throw Error('Genera prima il nuovo evidenze.html');
+ if(!confirm('Confermi di pubblicare SOLO evidenze.html su GitHub? ARCHIVIO non verrà modificato.'))return;
+ const remote=await request('evidenze.html?ref='+branch);
+ if(remote.sha!==loadedSha)throw Error('evidenze.html è cambiato su GitHub. Ricarica gli originali.');
+ const result=await request('evidenze.html',{method:'PUT',body:JSON.stringify({message:'Aggiornamento evidenze tramite admin',content:encode(offGenerated),sha:remote.sha,branch})});
+ loadedSha=null;get('fkPublish').disabled=true;say('Pubblicato SOLO evidenze.html. Commit: '+(result.commit?.sha||'non disponibile'));
+ }catch(e){say('ERRORE: '+e.message)}});
+})();
+</script></body></html>
