@@ -21,11 +21,16 @@ h1{font-size:26px;line-height:1.35;font-weight:400;margin:0;text-align:center}
 .social-wrap{margin-top:36px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
 .social-item{min-width:140px;max-width:160px;padding:14px 10px;border-radius:4px;display:flex;flex-direction:column;align-items:center;text-align:center;font-family:Inter,Arial,sans-serif}
 .social-item.muck-bg{background:#D1C7B8;border:1px solid #A8A29A}
+.social-item.muck-bg a{font-size:12px;font-weight:600;color:#1E2A32;text-decoration:none;display:block}
 .social-item.instagram{background:#F3EFE6;border:1px solid #E10600}
+.social-item.instagram a{font-size:12px;font-weight:600;color:#1E2A32;text-decoration:none;display:block}
+.social-item small{margin-top:6px;font-size:9.5px;color:#1E2A32;font-weight:500;display:block;background:#E8DCC8;padding:2px 6px;border-radius:2px}
 .mini{margin-top:32px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
 .mini a{display:flex;align-items:center;justify-content:center;background:#F3EFE6;border:1px solid #E10600;color:#1E2A32;padding:10px 12px;border-radius:2px;font-family:Inter,Arial,sans-serif;font-size:11px;text-decoration:none;min-width:105px;min-height:44px;text-align:center}
-#ricerche{max-width:700px;margin:0 auto;padding:24px 20px 40px;text-align:left;width:100%}
-#ricerche h2{font-size:20px;text-align:center}
+#ricerche{max-width:700px;margin:0 auto;padding:10px 20px 40px;text-align:left;width:100%}
+#ricerche details{border:1px solid #E10600;border-radius:4px;background:#F3EFE6;padding:10px 14px}
+#ricerche summary{cursor:pointer;font-size:14px;font-weight:600;text-align:center;list-style:none}
+#ricerche summary::-webkit-details-marker{display:none}
 #ricerche h3{font-size:15px;margin-top:22px}
 #ricerche p{font-size:13px;line-height:1.6;color:#2c2c2c}
 #ricerche ul{list-style:none;padding:0;margin:0}
@@ -40,9 +45,9 @@ h1{font-size:26px;line-height:1.35;font-weight:400;margin:0;text-align:center}
 <div class="sub2">Attestato Giornalismo AI – Università Federico II di Napoli</div>
 <div class="box"><span class="lbl">contatto diretto</span><a id="contactMail" class="contact-btn" href="mailto:edoardo.gridelli2026@libero.it">→ ✉ contatto</a></div>
 <div class="social-wrap">
-<div class="social-item muck-bg"><span class="label-top">in aggiornamento</span><span class="name-bottom">Facebook</span></div>
+<div class="social-item muck-bg"><a href="https://www.facebook.com/edoardo.gridelli2026" target="_blank" rel="noopener">Facebook</a><small>@edoardo.gridelli2026</small></div>
 <div class="social-item instagram"><a href="https://www.instagram.com/edoardo.gridelli2026/" target="_blank">Instagram</a><small>@edoardo.gridelli2026</small></div>
-<div class="social-item muck-bg"><span class="label-top">in aggiornamento</span><span class="name-bottom">LinkedIn</span></div>
+<div class="social-item muck-bg"><a href="https://www.linkedin.com/in/edoardo.gridelli2026" target="_blank" rel="noopener">LinkedIn</a><small>@edoardo.gridelli2026</small></div>
 </div>
 <div class="mini">
 <a href="./evidenze.html">Approfondimenti</a>
@@ -53,7 +58,8 @@ h1{font-size:26px;line-height:1.35;font-weight:400;margin:0;text-align:center}
 </div>
 </div>
 <section id="ricerche">
-<h2>Percorsi di ricerca</h2>
+<details>
+<summary>Percorsi di ricerca ▾</summary>
 <p>Ogni collegamento apre una ricerca su Google con filtro dal 2018, da verificare sul documento originale.</p>
 <h3>Teatri e compagnie</h3>
 <ul>
@@ -114,6 +120,7 @@ h1{font-size:26px;line-height:1.35;font-weight:400;margin:0;text-align:center}
 <li><a href="https://www.google.com/search?q=%28%22Edoardo%20Gridelli%22%20OR%20%22edoardo.gridelli2026%22%20OR%20%22NordEstNews.it%22%29%20%22critico%20teatrale%22%20after%3A2017-12-31" target="_blank" rel="nofollow noopener">Critico teatrale — firma</a></li>
 <li><a href="https://www.google.com/search?q=%28%22Edoardo%20Gridelli%22%20OR%20%22edoardo.gridelli2026%22%20OR%20%22NordEstNews.it%22%29%20%22critico%20musicale%22%20after%3A2017-12-31" target="_blank" rel="nofollow noopener">Critico musicale — firma</a></li>
 </ul>
+</details>
 </section>
 <script>
 (function(){var user="edoardo.gridelli2026";var domain="libero.it";var mail=user+"@"+domain;var btn=document.getElementById("contactMail");if(btn){btn.href="mailto:"+mail;}})();
