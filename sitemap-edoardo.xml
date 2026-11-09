@@ -1,5 +1,29 @@
-https://edgridellied-ship-it.github.io/edoardo-gridelli/
-2. https://edgridellied-ship-it.github.io/edoardo-gridelli/sitemap2.html
-3. https://edgridellied-ship-it.github.io/edoardo-gridelli/archivio.html
-4. https://edgridellied-ship-it.github.io/edoardo-gridelli/evidenze.html
-5. https://edgridellied-ship-it.github.io/edoardo-gridelli/curriculum.html
+XML
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://edgridellied-ship-it.github.io/edoardo-gridelli/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://edgridellied-ship-it.github.io/edoardo-gridelli/sitemap2.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://edgridellied-ship-it.github.io/edoardo-gridelli/archivio.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://edgridellied-ship-it.github.io/edoardo-gridelli/evidenze.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://edgridellied-ship-it.github.io/edoardo-gridelli/curriculum.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+</urlset>
